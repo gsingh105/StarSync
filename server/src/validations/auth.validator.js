@@ -1,7 +1,7 @@
 import { body } from "express-validator"
 
 export const registerValidator = [
-  body("fullName")
+  body("fullname")
     .notEmpty()
     .withMessage("Full name is required")
     .isLength({ min: 3 })

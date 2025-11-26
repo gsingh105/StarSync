@@ -6,8 +6,7 @@ export const registerUserController = async (req, res, next) => {
     try {
         const { fullname, email, password, role } = req.body
 
-        const { user, accessToken, refreshToken } = 
-            await registerUserServices(fullname, email, password, role)
+        const { user, accessToken, refreshToken } = await registerUserServices(fullname, email, password, role)
 
         res.cookie("accessToken", accessToken, cookieOptionsForAcessToken)
         res.cookie("refreshToken", refreshToken, cookieOptionsForRefreshToken)
@@ -24,8 +23,7 @@ export const loginUserController = async (req, res, next) => {
     try {
         const { email, password } = req.body
 
-        const { user, accessToken, refreshToken } =
-            await loginUserService(email, password)
+        const { user, accessToken, refreshToken } = await loginUserService(email, password)
 
         res.clearCookie("accessToken")
         res.clearCookie("refreshToken")

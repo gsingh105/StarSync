@@ -20,7 +20,7 @@ app.use(cookieParser())
 app.use(errorHandler)
 
 
-app.use("api/auth", userRoutes)
+app.use("/api/auth", userRoutes)
 
 
 app.listen(PORT, async () => {
