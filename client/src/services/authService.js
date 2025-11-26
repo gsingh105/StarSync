@@ -1,127 +1,76 @@
 import axios from 'axios';
 
-// Configure base URL - Uses window.location for fallback if env var is missing
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Configure base URL
+const API_URL = import.meta.env.API_URL || 'http://localhost:3000'; // Make sure this matches your backend port
 
-// Create axios instance with default config
 const api = axios.create({
   baseURL: `${API_URL}/api/auth`,
-  withCredentials: true, // Important: This enables sending cookies
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   }
 });
 
-// Add response interceptor for error handling
+// --- FIX IS HERE ---
+// Response interceptor
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle 401 unauthorized errors
-    if (error.response?.status === 401) {
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-    }
+    // We only want to reject the promise here.
+    // We DO NOT want to force a reload (window.location.href)
+    // because React Router/AuthContext will handle the redirection.
     return Promise.reject(error);
   }
 );
 
 const authService = {
-  // Register new user
   register: async (userData) => {
     try {
-      // --- FIX IS HERE ---
-      // We accept the data exactly as the component sends it.
-      // The component sends { fullName, email, password }, so we use those keys.
       const response = await api.post('/register', {
-        fullName: userData.fullName, // Changed from userData.name to userData.fullName
+        fullName: userData.fullName,
         email: userData.email,
         password: userData.password,
         role: userData.role || 'user'
       });
-
-      if (response.data.success) {
-        // Store user data in localStorage
-        localStorage.setItem('user', JSON.stringify(response.data.data));
-        return response.data;
-      }
-      throw new Error(response.data.message || 'Registration failed');
+      return response.data;
     } catch (error) {
       console.error('Registration error:', error);
       throw error;
     }
   },
 
-  // Login user
   login: async (credentials) => {
     try {
       const response = await api.post('/login', {
         email: credentials.email,
         password: credentials.password
       });
-
-      if (response.data.success) {
-        // Store user data in localStorage
-        localStorage.setItem('user', JSON.stringify(response.data.data));
-        return response.data;
-      }
-      throw new Error(response.data.message || 'Login failed');
+      return response.data;
     } catch (error) {
       console.error('Login error:', error);
       throw error;
     }
   },
 
-  // Logout user
   logout: async () => {
     try {
-      // Optional: Call backend logout endpoint if you implement it
-      // await api.post('/logout');
-      
-      // Clear local storage
-      localStorage.removeItem('user');
-      
-      // Redirect to login
-      window.location.href = '/login';
+      await api.post('/logout');
     } catch (error) {
       console.error('Logout error:', error);
-      // Still clear local data even if API call fails
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      // Even if the API call fails (e.g., token already expired),
+      // we generally just want the frontend to clear its state.
     }
   },
 
-  // Get current user from localStorage
-  getCurrentUser: () => {
+  checkAuth: async () => {
     try {
-      const userStr = localStorage.getItem('user');
-      return userStr ? JSON.parse(userStr) : null;
+      // If this returns 401, the interceptor passes the error here.
+      // We catch it, return null, and AuthContext sets user to null.
+      // No page reload happens!
+      const response = await api.get('/currentUser');
+      return response.data.success ? response.data.data : null;
     } catch (error) {
-      console.error('Error parsing user data:', error);
-      return null;
-    }
-  },
-
-  // Check if user is authenticated
-  isAuthenticated: () => {
-    const user = authService.getCurrentUser();
-    return !!user;
-  },
-
-  // Get user token (if stored separately)
-  getToken: () => {
-    const user = authService.getCurrentUser();
-    return user?.token || null;
-  },
-
-  // Update user data in localStorage
-  updateUser: (userData) => {
-    try {
-      const currentUser = authService.getCurrentUser();
-      const updatedUser = { ...currentUser, ...userData };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      return updatedUser;
-    } catch (error) {
-      console.error('Error updating user data:', error);
+      // This catches the 401 cleanly
       return null;
     }
   }

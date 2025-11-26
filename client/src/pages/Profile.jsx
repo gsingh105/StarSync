@@ -1,13 +1,14 @@
 import { useNavigate, Link } from 'react-router-dom';
-import authService from '../services/authService';
+import { useAuth } from '../context/AuthContext'; // UPDATED
 import { ArrowLeft, LogOut, Mail, User, Calendar } from 'lucide-react';
 
 export default function Profile() {
   const navigate = useNavigate();
-  const user = authService.getCurrentUser();
+  // Use context hooks instead of direct service calls
+  const { user, logout } = useAuth(); 
 
-  const handleLogout = () => {
-    authService.logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
 
@@ -48,7 +49,7 @@ export default function Profile() {
         <div className="max-w-2xl mx-auto">
           <div className="bg-white rounded-lg shadow-md p-8">
             <div className="flex items-center space-x-4 mb-6">
-              <div className="w-20 h-20 bg-linear-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">
                 {user?.fullName?.charAt(0).toUpperCase() || 'U'}
               </div>
               <div>

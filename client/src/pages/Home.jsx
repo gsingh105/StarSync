@@ -1,243 +1,338 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext'; // Import the hook
 
-// Mock data for key features
+// --- Classic Assets / Icons ---
+const StarIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+  </svg>
+);
+
+const FeatureIcon1 = () => (
+  <svg className="w-8 h-8 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path>
+  </svg>
+);
+
+const FeatureIcon2 = () => (
+  <svg className="w-8 h-8 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+  </svg>
+);
+
+const FeatureIcon3 = () => (
+  <svg className="w-8 h-8 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
+  </svg>
+);
+
+// Simplified ornamental divider
+const Divider = () => (
+  <div className="flex items-center justify-center py-8 opacity-50">
+     <div className="h-px w-24 bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
+     <div className="mx-2 text-amber-500">✦</div>
+     <div className="h-px w-24 bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
+  </div>
+);
+
 const features = [
   {
-    icon: (
-      <svg className="w-8 h-8 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
-      </svg>
-    ),
-    title: "Live Astrologer Consultation",
-    description: "Connect instantly via chat or call with certified Vedic and Tarot experts, available 24/7.",
+    icon: <FeatureIcon1 />,
+    title: "Live Consultation",
+    description: "Instant discourse with learned Vedic scholars and Tarot experts.",
+    color: "from-[#1a1625] to-[#121212]",
+    border: "border-amber-500/20"
   },
   {
-    icon: (
-      <svg className="w-8 h-8 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-      </svg>
-    ),
-    title: "Daily Personalized Horoscopes",
-    description: "Unlock predictions based on your full birth chart for career, love, and finance.",
+    icon: <FeatureIcon2 />,
+    title: "Vedic Horoscopes",
+    description: "Ancient wisdom tailored to your birth chart using precise planetary calculations.",
+    color: "from-[#1a1625] to-[#121212]",
+    border: "border-amber-500/20"
   },
   {
-    icon: (
-      <svg className="w-8 h-8 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-      </svg>
-    ),
-    title: "Relationship Compatibility",
-    description: "Analyze synastry reports to understand your true cosmic connection with partners.",
+    icon: <FeatureIcon3 />,
+    title: "Cosmic Union",
+    description: "Profound synastry reports analyzing the threads of destiny between souls.",
+    color: "from-[#1a1625] to-[#121212]",
+    border: "border-amber-500/20"
   },
 ];
 
 const testimonial = {
-  quote: "StarSync brought clarity and direction to my life. The detailed chart analysis was incredibly accurate. Highly recommend!",
-  name: "Anya S.",
-  role: "Verified User, Mumbai",
+  quote: "StarSync revealed paths I had not seen. It is not merely an app; it is a modern oracle. The guidance was profound and eerily accurate.",
+  name: "Anya Sharma",
+  role: "Mumbai, India",
   stars: 5
 };
 
+const POSITION = [30.7046, 76.7179];
+
 const Home = () => {
-  // Helper function to render star icons
-  const renderStars = (count) => {
-    return Array(5).fill(0).map((_, i) => (
-      <svg 
-        key={i} 
-        className={`w-5 h-5 ${i < count ? 'text-yellow-400' : 'text-gray-600'}`} 
-        fill="currentColor" 
-        viewBox="0 0 20 20" 
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path d="M9.049 2.927c.3-.921 1.63-.921 1.932 0l1.936 5.952h6.26c.969 0 1.371 1.24.588 1.81l-5.07 3.684 1.937 5.952c.3.921-.755 1.688-1.542 1.115L10 16.592l-5.07 3.684c-.787.573-1.842-.194-1.542-1.115l1.937-5.952-5.07-3.684c-.783-.57-.381-1.81.588-1.81h6.26l1.936-5.952z" />
-      </svg>
-    ));
+  // --- UPDATED: Use Context instead of local state ---
+  const { user, loading, logout } = useAuth(); 
+  const [showDropdown, setShowDropdown] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+        if (!e.target.closest('.user-menu')) setShowDropdown(false);
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // No reload needed; state updates automatically
+      navigate('/'); 
+    } catch (error) {
+      console.error('Logout failed', error);
+    }
+  };
+
+  const getUserInitials = (name) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      {/* Navigation Bar */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-sm shadow-xl border-b border-gray-800">
-        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <Link to="/" className="flex items-center">
-              <span className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-indigo-400">
-                StarSync
-              </span>
-            </Link>
-            
-            {/* Desktop Navigation Links */}
-            <div className="hidden md:flex items-center space-x-8">
-              <a 
-                href="#services" 
-                className="text-gray-300 hover:text-yellow-400 transition-colors duration-200 text-sm font-medium"
-              >
-                Services
-              </a>
-              <a 
-                href="#why-us" 
-                className="text-gray-300 hover:text-yellow-400 transition-colors duration-200 text-sm font-medium"
-              >
-                Why Us
-              </a>
-              <a 
-                href="#testimonials" 
-                className="text-gray-300 hover:text-yellow-400 transition-colors duration-200 text-sm font-medium"
-              >
-                Reviews
-              </a>
-            </div>
-            
-            {/* Auth Buttons */}
-            <div className="flex items-center space-x-3">
-              <Link 
-                to="/login" 
-                className="px-5 py-2 text-sm font-medium rounded-full border border-gray-600 text-gray-300 hover:bg-gray-800 hover:border-gray-500 transition-all duration-200"
-              >
-                Sign In
-              </Link>
-              <Link 
-                to="/register" 
-                className="px-5 py-2 text-sm font-bold rounded-full bg-yellow-500 text-gray-900 hover:bg-yellow-400 transition-all duration-200 shadow-lg shadow-yellow-500/30"
-              >
-                Sign Up
-              </Link>
-            </div>
-          </div>
-        </nav>
-      </header>
+    <div className="min-h-screen bg-[#050505] text-[#e0e0e0] font-sans overflow-x-hidden selection:bg-amber-900 selection:text-amber-100">
+      
+      {/* Import Classic Fonts */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap');
+        .font-cinzel { font-family: 'Cinzel', serif; }
+        .font-playfair { font-family: 'Playfair Display', serif; }
+      `}</style>
 
-      <main className="pt-16">
-        {/* Hero Section */}
-        <section className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-indigo-900 to-gray-900">
-          {/* Background Pattern */}
-          <div 
-            className="absolute inset-0 opacity-10" 
-            style={{ 
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-              backgroundSize: '60px 60px'
-            }}
-          />
-          
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
-            <div className="text-center">
-              <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold mb-6 leading-tight">
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-400 to-indigo-400 animate-pulse">
-                  Your Destiny, Decoded.
+      {/* --- Texture Overlay (The "Paper" Feel) --- */}
+      <div className="fixed inset-0 pointer-events-none z-[1] opacity-[0.03]" style={{ backgroundImage: `url("https://www.transparenttextures.com/patterns/stardust.png")` }}></div>
+
+      {/* --- Ambient Gold Glows --- */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[50rem] h-[50rem] bg-amber-600/10 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40rem] h-[40rem] bg-indigo-900/20 rounded-full blur-[100px]"></div>
+      </div>
+
+      {/* --- Navigation --- */}
+      <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8 mt-6">
+          <div className="relative flex items-center justify-between h-20 px-8 rounded-full bg-[#0a0a0c]/80 backdrop-blur-xl border border-amber-500/20 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+            
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-3 group">
+                <div className="relative">
+                    <div className="absolute inset-0 bg-amber-500 blur-md opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                    <StarIcon className="relative w-6 h-6 text-amber-400" />
+                </div>
+                <span className="text-2xl font-cinzel font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-300 to-amber-100">
+                  StarSync
                 </span>
-              </h1>
-              
-              <p className="text-xl md:text-2xl text-gray-300 mb-10 max-w-3xl mx-auto leading-relaxed">
-                Connect instantly with verified astrologers. Gain clarity on love, career, and life's biggest questions—powered by the stars.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row justify-center items-center gap-4 max-w-2xl mx-auto">
-                <Link
-                  to="/register"
-                  className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 text-lg font-bold rounded-full bg-yellow-500 text-gray-900 hover:bg-yellow-400 transition-all duration-200 shadow-2xl shadow-yellow-500/50 hover:shadow-yellow-500/70 hover:scale-105"
-                >
-                  Consult an Astrologer Now
-                </Link>
-                <Link
-                  to="/login"
-                  className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 text-lg font-medium rounded-full border-2 border-indigo-400 text-indigo-200 hover:bg-indigo-800/50 transition-all duration-200 hover:scale-105"
-                >
-                  Daily Horoscope
-                </Link>
-              </div>
+            </Link>
+
+            {/* Desktop Links */}
+            <div className="hidden md:flex items-center space-x-10">
+              {['Services', 'Why Us', 'Reviews', 'Contact'].map((item) => (
+                <a key={item} href={`#${item.toLowerCase().replace(' ', '-')}`} className="font-cinzel text-xs font-semibold tracking-widest text-amber-100/70 hover:text-amber-400 transition-colors uppercase">
+                  {item}
+                </a>
+              ))}
+            </div>
+
+            {/* Auth Actions (Profile or Login) */}
+            <div className="flex items-center gap-4">
+              {loading ? (
+                <div className="w-8 h-8 rounded-full bg-white/10 animate-pulse"></div>
+              ) : user ? (
+                <div className="relative user-menu">
+                  <button 
+                    onClick={() => setShowDropdown(!showDropdown)}
+                    className="flex items-center gap-3 focus:outline-none group"
+                  >
+                    <span className="hidden md:block text-sm font-playfair italic text-amber-100">{user.fullName}</span>
+                    <div className="w-10 h-10 rounded-full border border-amber-500/30 bg-[#15151a] flex items-center justify-center text-amber-400 font-cinzel shadow-lg group-hover:border-amber-400 transition-colors">
+                      {getUserInitials(user.fullName)}
+                    </div>
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {showDropdown && (
+                    <div className="absolute right-0 mt-4 w-64 rounded-sm bg-[#0a0a0c] border border-amber-500/30 shadow-[0_10px_40px_rgba(0,0,0,0.8)] py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                        <div className="px-5 py-4 border-b border-amber-500/10">
+                          <p className="text-[10px] font-cinzel text-amber-500 tracking-widest uppercase mb-1">Signed in as</p>
+                          <p className="text-sm font-playfair text-amber-100 truncate italic">{user.email}</p>
+                        </div>
+
+                        <div className="py-2">
+                            <Link 
+                            to="/dashboard" 
+                            className="block px-5 py-2.5 text-xs font-cinzel tracking-wider text-gray-400 hover:text-amber-400 hover:bg-amber-900/10 transition-colors uppercase"
+                            >
+                              My Dashboard
+                            </Link>
+                            <Link 
+                            to="/profile" 
+                            className="block px-5 py-2.5 text-xs font-cinzel tracking-wider text-gray-400 hover:text-amber-400 hover:bg-amber-900/10 transition-colors uppercase"
+                            >
+                              Profile Settings
+                            </Link>
+                        </div>
+                        
+                        <div className="h-px bg-amber-500/10 my-1 mx-4"></div>
+                        
+                        <div className="py-2">
+                            <button 
+                              onClick={handleLogout} 
+                              className="block w-full text-left px-5 py-2.5 text-xs font-cinzel tracking-wider text-red-400 hover:bg-red-900/10 hover:text-red-300 transition-colors uppercase"
+                            >
+                              Sign Out
+                            </button>
+                        </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center gap-4">
+                  <Link to="/login" className="hidden md:block text-sm font-cinzel font-semibold text-amber-200/80 hover:text-amber-100">Log in</Link>
+                  <Link to="/register" className="px-6 py-2.5 text-xs font-cinzel font-bold tracking-widest text-[#050505] bg-gradient-to-r from-amber-300 to-yellow-500 rounded-full hover:shadow-[0_0_20px_rgba(251,191,36,0.4)] transition-all transform hover:-translate-y-0.5">
+                    Consult Now
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
+        </div>
+      </nav>
+
+      <main className="relative z-10 pt-32">
+        
+        {/* Hero Section */}
+        <section className="relative max-w-7xl mx-auto px-6 lg:px-8 text-center py-16">
+            <div className="inline-block mb-6">
+                <div className="flex items-center gap-3 px-4 py-1.5 rounded-full border border-amber-500/30 bg-amber-900/10 backdrop-blur-sm">
+                    <span className="text-amber-400 text-lg">✦</span>
+                    <span className="font-cinzel text-xs font-bold tracking-[0.2em] text-amber-200 uppercase">Vedic Wisdom Meets Modern Tech</span>
+                    <span className="text-amber-400 text-lg">✦</span>
+                </div>
+            </div>
+            
+            <h1 className="font-cinzel text-5xl md:text-8xl font-medium tracking-tight mb-8 leading-tight text-white">
+                Destiny, <br />
+                <span className="italic font-playfair text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-200">
+                    Decoded.
+                </span>
+            </h1>
+
+            <p className="max-w-2xl mx-auto font-playfair text-xl text-gray-400 mb-12 italic leading-relaxed">
+                "The stars do not compel, they incline." <br/>
+                <span className="text-base font-sans not-italic text-gray-500 mt-2 block">
+                    Connect with certified masters of the Vedic arts for clarity on love, career, and life's great tapestry.
+                </span>
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                <Link to="/register" className="w-full sm:w-auto px-10 py-4 border border-amber-500/50 bg-[#1a1500] hover:bg-[#2a2200] text-amber-100 font-cinzel font-bold tracking-widest uppercase transition-all duration-300 relative overflow-hidden group">
+                    <span className="relative z-10">Read My Chart</span>
+                    <div className="absolute inset-0 bg-amber-500/10 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+                </Link>
+            </div>
         </section>
 
+        <Divider />
+
         {/* Features Section */}
-        <section id="services" className="py-20 bg-gray-800/50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section id="services" className="py-16 max-w-7xl mx-auto px-6 lg:px-8">
             <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4">Our Cosmic Services</h2>
-              <p className="text-indigo-300 text-lg md:text-xl">Guiding your journey with ancient wisdom and modern connection.</p>
+                <h2 className="font-cinzel text-3xl md:text-4xl text-amber-100 mb-3">Our Sacred Offerings</h2>
+                <p className="font-playfair italic text-gray-400">Services curated for the modern seeker</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {features.map((feature, index) => (
-                <div 
-                  key={index} 
-                  className="bg-gray-800 p-8 rounded-2xl shadow-2xl border border-gray-700 hover:border-yellow-500 transition-all duration-300 hover:transform hover:scale-105"
-                >
-                  <div className="mb-4">{feature.icon}</div>
-                  <h3 className="text-xl font-bold text-yellow-400 mb-3">{feature.title}</h3>
-                  <p className="text-gray-400 leading-relaxed">{feature.description}</p>
+                {features.map((feature, idx) => (
+                    <div 
+                        key={idx} 
+                        className={`group relative p-8 bg-gradient-to-b ${feature.color} border border-white/5 hover:border-amber-500/40 transition-all duration-500`}
+                    >
+                        {/* Corner Accents */}
+                        <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-amber-500/50"></div>
+                        <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-amber-500/50"></div>
+                        <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-amber-500/50"></div>
+                        <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-amber-500/50"></div>
+
+                        <div className="mb-6 opacity-80 group-hover:opacity-100 transition-opacity duration-300 transform group-hover:-translate-y-1">
+                            {feature.icon}
+                        </div>
+                        <h3 className="font-cinzel text-xl font-bold text-amber-100 mb-4">{feature.title}</h3>
+                        <p className="font-serif text-gray-400 leading-relaxed text-sm">{feature.description}</p>
+                    </div>
+                ))}
+            </div>
+        </section>
+
+        {/* Testimonial */}
+        <section id="reviews" className="py-20 px-6">
+            <div className="max-w-4xl mx-auto relative">
+                <div className="absolute -top-10 -left-10 text-9xl font-serif text-amber-500/10 leading-none">“</div>
+                <div className="border-y border-amber-500/20 py-12 text-center bg-[#0a0a0c]/50 backdrop-blur-sm">
+                    <div className="flex justify-center gap-2 mb-6 text-amber-500">
+                        {[...Array(5)].map((_, i) => <StarIcon key={i} className="w-4 h-4" />)}
+                    </div>
+                    <blockquote className="font-playfair text-2xl md:text-3xl text-gray-200 italic mb-8 leading-normal">
+                        {testimonial.quote}
+                    </blockquote>
+                    <cite className="not-italic">
+                        <span className="block font-cinzel text-amber-400 font-bold tracking-widest text-sm">{testimonial.name}</span>
+                        <span className="block font-sans text-xs text-gray-500 mt-1 uppercase tracking-wider">{testimonial.role}</span>
+                    </cite>
                 </div>
-              ))}
             </div>
-          </div>
         </section>
 
-        {/* Stats Section */}
-        <section id="why-us" className="py-20 bg-gray-900">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4">Why Choose StarSync?</h2>
+        {/* --- Map Section --- */}
+        <section id="contact" className="relative pb-32 px-6 lg:px-8">
+            <div className="max-w-5xl mx-auto">
+                <div className="text-center mb-10">
+                    <h2 className="font-cinzel text-3xl text-white">Sanctum Location</h2>
+                    <div className="h-px w-20 bg-amber-500/50 mx-auto mt-4"></div>
+                </div>
+                
+                {/* Map Frame Placeholder */}
+                <div className="relative p-2 border border-amber-500/20 rounded-sm">
+                    {/* Inner gold border */}
+                    <div className="absolute inset-2 border border-amber-500/10 pointer-events-none z-20"></div>
+                    
+                    <div className="w-full h-[450px] overflow-hidden relative z-0 bg-[#0a0a0c] flex items-center justify-center">
+                        {/* Fallback Static Visual */}
+                         <div className="text-center opacity-40">
+                             <div className="w-24 h-24 rounded-full border border-amber-500/20 flex items-center justify-center mx-auto mb-4">
+                                <span className="text-4xl text-amber-500/50">✦</span>
+                             </div>
+                             <p className="font-cinzel text-amber-500/50 tracking-widest">Map View Unavailable</p>
+                             <p className="font-playfair italic text-gray-600 mt-2">Visit us at Mohali, Punjab</p>
+                         </div>
+                        
+                        {/* Vignette Overlay */}
+                        <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_80px_rgba(0,0,0,0.9)] z-[400]"></div>
+                    </div>
+                </div>
+                
+                <div className="text-center mt-6 font-cinzel text-xs text-amber-500/50 tracking-[0.3em]">
+                    LAT: {POSITION[0]} • LONG: {POSITION[1]}
+                </div>
             </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mb-12">
-              <div className="p-6 rounded-xl bg-gray-800/50 shadow-inner border border-gray-700">
-                <p className="text-4xl md:text-5xl font-extrabold text-yellow-500 mb-2">100K+</p>
-                <p className="text-gray-400 text-sm md:text-base">Satisfied Readings</p>
-              </div>
-              <div className="p-6 rounded-xl bg-gray-800/50 shadow-inner border border-gray-700">
-                <p className="text-4xl md:text-5xl font-extrabold text-yellow-500 mb-2">500+</p>
-                <p className="text-gray-400 text-sm md:text-base">Verified Astrologers</p>
-              </div>
-              <div className="p-6 rounded-xl bg-gray-800/50 shadow-inner border border-gray-700">
-                <p className="text-4xl md:text-5xl font-extrabold text-yellow-500 mb-2">24/7</p>
-                <p className="text-gray-400 text-sm md:text-base">Instant Availability</p>
-              </div>
-              <div className="p-6 rounded-xl bg-gray-800/50 shadow-inner border border-gray-700">
-                <p className="text-4xl md:text-5xl font-extrabold text-yellow-500 mb-2">Private</p>
-                <p className="text-gray-400 text-sm md:text-base">100% Confidential</p>
-              </div>
-            </div>
-
-            <div className="text-center">
-              <Link
-                to="/register"
-                className="inline-flex items-center px-8 py-3 text-lg font-semibold rounded-full bg-indigo-600 text-white hover:bg-indigo-500 transition-all duration-200 shadow-xl shadow-indigo-600/50 hover:shadow-indigo-600/70 hover:scale-105"
-              >
-                Meet Our Experts
-              </Link>
-            </div>
-          </div>
         </section>
 
-        {/* Testimonial Section */}
-        <section id="testimonials" className="py-20 bg-gray-800/50">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4">What Our Stars Say</h2>
-            </div>
-
-            <div className="bg-gray-700/70 p-8 md:p-12 rounded-2xl shadow-2xl border border-gray-600">
-              <div className="flex justify-center mb-6">
-                {renderStars(testimonial.stars)}
-              </div>
-              <blockquote className="text-xl md:text-2xl italic text-gray-200 mb-6 leading-relaxed">
-                "{testimonial.quote}"
-              </blockquote>
-              <div className="text-center">
-                <p className="text-yellow-400 font-semibold text-lg">{testimonial.name}</p>
-                <p className="text-gray-400 text-sm mt-1">{testimonial.role}</p>
-              </div>
-            </div>
-          </div>
-        </section>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 border-t border-gray-800 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm">
-          <p>&copy; {new Date().getFullYear()} StarSync. All rights reserved. | Terms & Privacy | Contact Us</p>
+      <footer className="border-t border-amber-500/10 bg-[#050505] py-12 relative z-20">
+        <div className="max-w-7xl mx-auto px-6 text-center">
+            <StarIcon className="w-6 h-6 text-amber-700 mx-auto mb-4" />
+            <p className="font-cinzel text-xs text-gray-500 tracking-widest uppercase mb-4">
+                &copy; {new Date().getFullYear()} StarSync • Guided by the Stars
+            </p>
         </div>
       </footer>
     </div>
