@@ -4,14 +4,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, AlertCircle } from 'lucide-react';
-// import authService from '../../services/authService';
+import authService from '../../services/authService';
 
+// Validation Schema
 const registerSchema = z.object({
-  name: z
+  fullName: z
     .string()
     .min(1, 'Name is required')
-    .min(2, 'Name must be at least 2 characters')
-    .max(50, 'Name must be less than 50 characters')
+    .min(3, 'Name must be at least 3 characters')
+    .max(30, 'Name must be less than 30 characters')
     .regex(/^[a-zA-Z\s]+$/, 'Name can only contain letters and spaces'),
   email: z
     .string()
@@ -53,16 +54,51 @@ export default function Register() {
     setApiError('');
 
     try {
-      const response = await authService.register({
-        name: data.name,
+      const payload = {
+        fullName: data.fullName, 
         email: data.email,
         password: data.password
-      });
+      };
+
+      console.log("Sending Payload to Server:", payload);
+
+      const response = await authService.register(payload);
+      
       console.log('Registration success:', response);
       navigate('/dashboard');
     } catch (error) {
-      console.error('Registration error:', error);
-      setApiError(error.response?.data?.message || 'Registration failed');
+      console.error('Full Error Object:', error);
+
+      let errorMessage = 'Registration failed. Please check console for details.';
+
+      if (error.response?.data) {
+        console.error("SERVER REJECTION REASON:", error.response.data);
+        const serverData = error.response.data;
+
+        // Fix for "Objects are not valid as a React child"
+        // We check if the returned properties are objects and extract the string message inside
+        if (typeof serverData === 'string') {
+          errorMessage = serverData;
+        } else if (serverData.message) {
+          // If message is an object (e.g. { message: "Error" }), assume it has a nested message or stringify it
+          errorMessage = typeof serverData.message === 'object' 
+            ? (serverData.message.message || JSON.stringify(serverData.message)) 
+            : serverData.message;
+        } else if (serverData.error) {
+          // If error is an object (e.g. { message: "Error" }), extract nested message
+          errorMessage = typeof serverData.error === 'object' 
+            ? (serverData.error.message || JSON.stringify(serverData.error)) 
+            : serverData.error;
+        } else if (Array.isArray(serverData.errors) && serverData.errors.length > 0) {
+           const firstError = serverData.errors[0];
+           errorMessage = typeof firstError === 'object' 
+            ? (firstError.message || JSON.stringify(firstError)) 
+            : firstError;
+        }
+      }
+
+      // Ensure apiError is always a string to prevent React crash
+      setApiError(String(errorMessage));
     } finally {
       setLoading(false);
     }
@@ -73,7 +109,7 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="w-full max-w-md bg-white rounded-lg shadow-xl p-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
@@ -84,30 +120,30 @@ export default function Register() {
           </p>
         </div>
 
-        <div className="space-y-5">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           {/* Name field */}
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
               Full Name
             </label>
             <div className="relative">
               <User className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
               <input
-                id="name"
+                id="fullName"
                 type="text"
                 placeholder="John Doe"
-                {...register('name')}
-                className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
-                  errors.name 
+                {...register('fullName')}
+                className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition-all text-gray-900 ${
+                  errors.fullName 
                     ? 'border-red-500 focus:ring-red-500' 
                     : 'border-gray-300 focus:ring-blue-500'
                 }`}
               />
             </div>
-            {errors.name && (
+            {errors.fullName && (
               <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
                 <AlertCircle className="h-4 w-4" />
-                {errors.name.message}
+                {errors.fullName.message}
               </p>
             )}
           </div>
@@ -124,7 +160,7 @@ export default function Register() {
                 type="email"
                 placeholder="name@example.com"
                 {...register('email')}
-                className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition-all text-gray-900 ${
                   errors.email 
                     ? 'border-red-500 focus:ring-red-500' 
                     : 'border-gray-300 focus:ring-blue-500'
@@ -151,7 +187,7 @@ export default function Register() {
                 type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
                 {...register('password')}
-                className={`w-full pl-10 pr-12 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                className={`w-full pl-10 pr-12 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition-all text-gray-900 ${
                   errors.password 
                     ? 'border-red-500 focus:ring-red-500' 
                     : 'border-gray-300 focus:ring-blue-500'
@@ -185,7 +221,7 @@ export default function Register() {
                 type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
                 {...register('confirmPassword')}
-                className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition-all text-gray-900 ${
                   errors.confirmPassword 
                     ? 'border-red-500 focus:ring-red-500' 
                     : 'border-gray-300 focus:ring-blue-500'
@@ -200,7 +236,7 @@ export default function Register() {
             )}
           </div>
 
-          {/* API Error */}
+          {/* API Error Display */}
           {apiError && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm text-red-600 flex items-center gap-2">
@@ -212,7 +248,7 @@ export default function Register() {
 
           {/* Submit button */}
           <button
-            onClick={handleSubmit(onSubmit)}
+            type="submit"
             disabled={loading}
             className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all disabled:bg-blue-400 disabled:cursor-not-allowed"
           >
@@ -262,7 +298,7 @@ export default function Register() {
               Sign in
             </Link>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );

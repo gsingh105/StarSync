@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// Configure base URL - FIXED: Use window.location for fallback
+// Configure base URL - Uses window.location for fallback if env var is missing
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // Create axios instance with default config
@@ -29,8 +29,11 @@ const authService = {
   // Register new user
   register: async (userData) => {
     try {
+      // --- FIX IS HERE ---
+      // We accept the data exactly as the component sends it.
+      // The component sends { fullName, email, password }, so we use those keys.
       const response = await api.post('/register', {
-        fullName: userData.name, // Map 'name' to 'fullName' for backend
+        fullName: userData.fullName, // Changed from userData.name to userData.fullName
         email: userData.email,
         password: userData.password,
         role: userData.role || 'user'
