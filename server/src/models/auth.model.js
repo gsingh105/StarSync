@@ -5,9 +5,9 @@ const authSchema = new Schema(
     {
         fullName: {
             type: String,
-            required: [true, "Full name is required"], // ← Changed error message
-            minlength: [3, "Full name must be at least 3 characters"], // ← Fixed typo
-            maxlength: [30, "Full name cannot exceed 30 characters"] // ← Fixed message
+            required: [true, "Full name is required"],
+            minlength: [3, "Full name must be at least 3 characters"], 
+            maxlength: [30, "Full name cannot exceed 30 characters"] 
         },
 
         email: {
@@ -39,13 +39,12 @@ const authSchema = new Schema(
 )
 
 
-authSchema.pre("save", async function (next) { // ← Added 'next' parameter
-    if (!this.isModified("password")) return next() // ← Added next()
-    
+authSchema.pre("save", async function (next) { 
+    if (!this.isModified("password")) return next() 
     const salt = await bcrypt.genSalt(10)
     this.password = await bcrypt.hash(this.password, salt)
-    next() // ← Added next()
-}) // ← Added missing closing brace
+    next() 
+}) 
 
 
 authSchema.methods.comparePassword = async function (enteredPassword) {
