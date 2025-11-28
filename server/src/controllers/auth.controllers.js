@@ -1,5 +1,5 @@
 import { findUserById, updateRefreshToken } from "../dao/auth.dao.js"
-import { loginUserService, registerUserServices } from "../services/auth.services.js"
+import { googleLoginService, loginUserService, registerUserServices } from "../services/auth.services.js"
 import { successResponse } from "../utils/response.js"
 import { cookieOptionsForAcessToken, cookieOptionsForRefreshToken } from "./cookie.config.js"
 
@@ -63,4 +63,22 @@ export const getCurrentUserController = async (req, res, next) => {
     } catch (error) {
         next(error)
     }
+}
+
+
+export const googleLoginController = async (req, res, next) => {
+  try {
+    const { idToken } = req.body
+
+    if (!idToken) throw new AppError("Google ID token is required", 400)
+
+    const { user, token, refreshToken } = await googleLoginService(idToken)
+
+    res.cookie("accessToken", token, cookieOptionsForAcessToken)
+    res.cookie("refreshToken", refreshToken, cookieOptionsForRefreshToken)
+
+    return successResponse(res, "Login successful", user, 200)
+  } catch (err) {
+    next(err)
+  }
 }
