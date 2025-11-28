@@ -10,7 +10,7 @@ import userRoutes from "./src/routes/auth.routes.js"
 
 const app = express()
 
-const PORT = process.env.PORT || 8000
+const PORT = process.env.PORT || 3000
 
 
 const corsOptions = {
