@@ -40,6 +40,7 @@ const authSchema = new Schema(
     }
 )
 
+// RESOLUTION: We are using the cleaner async syntax without 'next'
 authSchema.pre("save", async function () { 
     if (!this.isModified("password")) return 
     const salt = await bcrypt.genSalt(10)

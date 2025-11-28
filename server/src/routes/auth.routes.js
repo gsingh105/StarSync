@@ -1,4 +1,5 @@
 import express from "express"
+
 import { registerValidator, loginValidator } from "../validations/auth.validator.js"
 import { validate } from "../middlewares/validationResult.js"
 import { 
@@ -7,7 +8,8 @@ import {
     logoutUserController, 
     registerUserController,
     forgotPasswordController, 
-    resetPasswordController   
+    resetPasswordController,
+    googleLoginController 
 } from "../controllers/auth.controllers.js"
 import { authMiddleware } from "../middlewares/autMiddleware.js"
 
@@ -20,5 +22,7 @@ router.get("/currentUser", authMiddleware, getCurrentUserController)
 
 router.post("/forgot-password", forgotPasswordController)
 router.post("/reset-password/:resetToken", resetPasswordController)
+
+router.post("/google", googleLoginController)
 
 export default router

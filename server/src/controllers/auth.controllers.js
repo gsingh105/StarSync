@@ -1,15 +1,15 @@
 import { findUserById, updateRefreshToken } from "../dao/auth.dao.js"
-import { loginUserService, registerUserServices } from "../services/auth.services.js"
+import { googleLoginService, loginUserService, registerUserServices } from "../services/auth.services.js"
 import { successResponse, errorResponse } from "../utils/response.js"
 import { cookieOptionsForAcessToken, cookieOptionsForRefreshToken } from "./cookie.config.js"
-import authModel from "../models/auth.model.js" // Direct access for reset logic
+import authModel from "../models/auth.model.js"
 import sendEmail from "../utils/sendEmail.js"
 import crypto from "crypto"
 
 
 export const registerUserController = async (req, res, next) => {
     try {
-        const { fullName, email, password } = req.body // Removed role for security
+        const { fullName, email, password } = req.body
         const { user, accessToken, refreshToken } =
             await registerUserServices(fullName, email, password, "user")
 
@@ -62,6 +62,7 @@ export const getCurrentUserController = async (req, res, next) => {
     }
 }
 
+// --- Password Reset Logic (Your Changes) ---
 
 export const forgotPasswordController = async (req, res, next) => {
     try {
@@ -131,4 +132,24 @@ export const resetPasswordController = async (req, res, next) => {
     } catch (error) {
         next(error)
     }
+}
+
+// --- Google Auth Logic (Main Branch Changes) ---
+
+export const googleLoginController = async (req, res, next) => {
+  try {
+    const { idToken } = req.body
+
+    // Note: Ensure AppError is imported or use errorResponse here if AppError is undefined
+    if (!idToken) throw new Error("Google ID token is required") 
+
+    const { user, token, refreshToken } = await googleLoginService(idToken)
+
+    res.cookie("accessToken", token, cookieOptionsForAcessToken)
+    res.cookie("refreshToken", refreshToken, cookieOptionsForRefreshToken)
+
+    return successResponse(res, "Login successful", user, 200)
+  } catch (err) {
+    next(err)
+  }
 }
