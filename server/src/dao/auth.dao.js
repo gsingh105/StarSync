@@ -1,9 +1,9 @@
 import userModel from "../models/auth.model.js"
 
 
-export const createUser = async (fullname, email, password, role = "user", refreshToken) => {
+export const createUser = async (fullName, email, password, role = "user", refreshToken) => {
     const userData = {
-        fullname,
+        fullName,
         email,
         password,
         role,
@@ -17,7 +17,7 @@ export const findUserByEmail = async (email) => {
 }
 
 export const findUserById = async (id) => {
-    return await userModel.findById(id).select("-password").populate("addresses")
+    return await userModel.findById(id).select("-password")
 }
 
 export const updateRefreshToken = async (userId, refreshToken) => {

@@ -3,16 +3,16 @@ import bcrypt from "bcryptjs"
 
 const authSchema = new Schema(
     {
-        fullname: {
+        fullName: {
             type: String,
-            required: [true, "First name is required"],
-            minlength: [3, "first name must be at least 3 charcters"],
-            maxlength: [30, "First name cannot exceed 30 characters"]
+            required: [true, "Full name is required"],
+            minlength: [3, "Full name must be at least 3 characters"], 
+            maxlength: [30, "Full name cannot exceed 30 characters"] 
         },
 
         email: {
             type: String,
-            required: true,
+            required: [true, "Email is required"], // ← Added error message
             unique: true,
             lowercase: true,
             trim: true
@@ -20,8 +20,8 @@ const authSchema = new Schema(
 
         password: {
             type: String,
-            required: true,
-            minlength: [6, "Password must be at least 6 charcters"],
+            required: [true, "Password is required"], // ← Added error message
+            minlength: [6, "Password must be at least 6 characters"], // ← Fixed typo
         },
         role: {
             type: String,
@@ -39,11 +39,12 @@ const authSchema = new Schema(
 )
 
 
-authSchema.pre("save", async function () {
+authSchema.pre("save", async function (next) { 
     if (!this.isModified("password")) return
-    this.password = await bcrypt.hash(this.password, 10)
-})
-
+    const salt = await bcrypt.genSalt(10)
+    this.password = await bcrypt.hash(this.password, salt)
+     
+}) 
 
 
 authSchema.methods.comparePassword = async function (enteredPassword) {

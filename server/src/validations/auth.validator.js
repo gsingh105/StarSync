@@ -1,7 +1,7 @@
 import { body } from "express-validator"
 
 export const registerValidator = [
-  body("fullname")
+  body("fullName")
     .notEmpty()
     .withMessage("Full name is required")
     .isLength({ min: 3 })
@@ -16,8 +16,8 @@ export const registerValidator = [
   body("password")
     .notEmpty()
     .withMessage("Password is required")
-    .isLength({ min: 6 })
-    .withMessage("Password must be at least 6 characters long")
+    .isLength({ min: 8 })
+    .withMessage("Password must be at least 8 characters long")
 ]
 
 export const loginValidator = [
