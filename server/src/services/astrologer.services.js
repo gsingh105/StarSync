@@ -1,15 +1,16 @@
-import { findAstrologerByEmail } from "../dao/astrologer.dao.js"
-import Astrologer from "../models/astrologer.model.js"
-import { AppError } from "../utils/errorHanlder.js"
+import { createAstrologer, findAstrologerByEmail, findAllActiveAstrologers } from "../dao/astrologer.dao.js";
+import { ConflictError } from "../utils/errorHanlder.js"; 
 
 export const addAstrologerService = async (astroData) => {
-    const { email, phone } = astroData
-
-    const existingAstrologer = await findAstrologerByEmail(email)
+    const existingAstrologer = await findAstrologerByEmail(astroData.email);
     if (existingAstrologer) {
-        throw new AppError("Astrologer with this email or phone already exists", 409)
+        throw new ConflictError("Astrologer with this email already exists");
     }
 
-    const newAstrologer = await Astrologer.create(astroData)
-    return newAstrologer
+    return await createAstrologer(astroData);
+}
+
+export const getAllAstrologersService = async (query) => {
+    // passing query allows for future pagination or filtering implementation in the DAO
+    return await findAllActiveAstrologers();
 }

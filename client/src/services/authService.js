@@ -1,15 +1,15 @@
 import axios from 'axios';
 
-// Ensure this points to backend port 8000
 const API_URL = import.meta.env.API_URL || 'http://localhost:3000';
 
 const api = axios.create({
   baseURL: `${API_URL}/api/auth`,
-  withCredentials: true,
+  withCredentials: true, 
   headers: {
     'Content-Type': 'application/json',
   }
 });
+
 
 api.interceptors.response.use(
   (response) => response,
@@ -19,6 +19,7 @@ api.interceptors.response.use(
 );
 
 const authService = {
+  
   register: async (userData) => {
     const response = await api.post('/register', {
         fullName: userData.fullName,
@@ -29,6 +30,7 @@ const authService = {
     return response.data;
   },
 
+  
   login: async (credentials) => {
     const response = await api.post('/login', {
         email: credentials.email,
@@ -36,6 +38,13 @@ const authService = {
     });
     return response.data;
   },
+
+  
+  googleLogin: async (accessToken) => {
+    const response = await api.post('/google', { accessToken });
+    return response.data;
+  },
+
 
   logout: async () => {
     try {
@@ -45,6 +54,7 @@ const authService = {
     }
   },
 
+  
   checkAuth: async () => {
     try {
       const response = await api.get('/currentUser');
@@ -54,11 +64,13 @@ const authService = {
     }
   },
 
+ 
   forgotPassword: async (email) => {
     const response = await api.post('/forgot-password', { email });
     return response.data;
   },
 
+  // Reset Password
   resetPassword: async (token, password) => {
     const response = await api.post(`/reset-password/${token}`, { password });
     return response.data;

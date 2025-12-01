@@ -1,6 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext'; // Import the hook
+import { useAuth } from '../context/AuthContext';
+// 1. Import Leaflet components
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// --- Fix Leaflet Default Icon Issue ---
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+let DefaultIcon = L.icon({
+    iconUrl: icon,
+    shadowUrl: iconShadow,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41]
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
 
 // --- Classic Assets / Icons ---
 const StarIcon = ({ className }) => (
@@ -9,25 +26,23 @@ const StarIcon = ({ className }) => (
   </svg>
 );
 
+// ... (Keep FeatureIcon1, FeatureIcon2, FeatureIcon3, Divider components as they were) ...
 const FeatureIcon1 = () => (
   <svg className="w-8 h-8 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path>
   </svg>
 );
-
 const FeatureIcon2 = () => (
   <svg className="w-8 h-8 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
   </svg>
 );
-
 const FeatureIcon3 = () => (
   <svg className="w-8 h-8 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
   </svg>
 );
 
-// Simplified ornamental divider
 const Divider = () => (
   <div className="flex items-center justify-center py-8 opacity-50">
      <div className="h-px w-24 bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
@@ -67,10 +82,10 @@ const testimonial = {
   stars: 5
 };
 
+// Location for Mohali, Punjab
 const POSITION = [30.7046, 76.7179];
 
 const Home = () => {
-  // --- UPDATED: Use Context instead of local state ---
   const { user, loading, logout } = useAuth(); 
   const [showDropdown, setShowDropdown] = useState(false);
   const navigate = useNavigate();
@@ -86,7 +101,6 @@ const Home = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      // No reload needed; state updates automatically
       navigate('/'); 
     } catch (error) {
       console.error('Logout failed', error);
@@ -101,28 +115,30 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-[#050505] text-[#e0e0e0] font-sans overflow-x-hidden selection:bg-amber-900 selection:text-amber-100">
       
-      {/* Import Classic Fonts */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap');
         .font-cinzel { font-family: 'Cinzel', serif; }
         .font-playfair { font-family: 'Playfair Display', serif; }
+        /* Fix for Leaflet Map Z-Index */
+        .leaflet-container {
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            background: #0a0a0c;
+        }
       `}</style>
 
-      {/* --- Texture Overlay (The "Paper" Feel) --- */}
+      {/* ... Texture and Glows (Keep existing) ... */}
       <div className="fixed inset-0 pointer-events-none z-[1] opacity-[0.03]" style={{ backgroundImage: `url("https://www.transparenttextures.com/patterns/stardust.png")` }}></div>
-
-      {/* --- Ambient Gold Glows --- */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[50rem] h-[50rem] bg-amber-600/10 rounded-full blur-[120px]"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[40rem] h-[40rem] bg-indigo-900/20 rounded-full blur-[100px]"></div>
       </div>
 
-      {/* --- Navigation --- */}
+      {/* --- Navigation (Keep existing) --- */}
       <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
         <div className="mx-auto max-w-7xl px-6 lg:px-8 mt-6">
           <div className="relative flex items-center justify-between h-20 px-8 rounded-full bg-[#0a0a0c]/80 backdrop-blur-xl border border-amber-500/20 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
-            
-            {/* Logo */}
             <Link to="/" className="flex items-center gap-3 group">
                 <div className="relative">
                     <div className="absolute inset-0 bg-amber-500 blur-md opacity-20 group-hover:opacity-40 transition-opacity"></div>
@@ -133,7 +149,6 @@ const Home = () => {
                 </span>
             </Link>
 
-            {/* Desktop Links */}
             <div className="hidden md:flex items-center space-x-10">
               {['Services', 'Why Us', 'Reviews', 'Contact'].map((item) => (
                 <a key={item} href={`#${item.toLowerCase().replace(' ', '-')}`} className="font-cinzel text-xs font-semibold tracking-widest text-amber-100/70 hover:text-amber-400 transition-colors uppercase">
@@ -142,54 +157,30 @@ const Home = () => {
               ))}
             </div>
 
-            {/* Auth Actions (Profile or Login) */}
             <div className="flex items-center gap-4">
               {loading ? (
                 <div className="w-8 h-8 rounded-full bg-white/10 animate-pulse"></div>
               ) : user ? (
                 <div className="relative user-menu">
-                  <button 
-                    onClick={() => setShowDropdown(!showDropdown)}
-                    className="flex items-center gap-3 focus:outline-none group"
-                  >
+                  <button onClick={() => setShowDropdown(!showDropdown)} className="flex items-center gap-3 focus:outline-none group">
                     <span className="hidden md:block text-sm font-playfair italic text-amber-100">{user.fullName}</span>
                     <div className="w-10 h-10 rounded-full border border-amber-500/30 bg-[#15151a] flex items-center justify-center text-amber-400 font-cinzel shadow-lg group-hover:border-amber-400 transition-colors">
                       {getUserInitials(user.fullName)}
                     </div>
                   </button>
-
-                  {/* Dropdown Menu */}
                   {showDropdown && (
-                    <div className="absolute right-0 mt-4 w-64 rounded-sm bg-[#0a0a0c] border border-amber-500/30 shadow-[0_10px_40px_rgba(0,0,0,0.8)] py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                    <div className="absolute right-0 mt-4 w-64 rounded-sm bg-[#0a0a0c] border border-amber-500/30 shadow-[0_10px_40px_rgba(0,0,0,0.8)] py-2 z-50">
                         <div className="px-5 py-4 border-b border-amber-500/10">
                           <p className="text-[10px] font-cinzel text-amber-500 tracking-widest uppercase mb-1">Signed in as</p>
                           <p className="text-sm font-playfair text-amber-100 truncate italic">{user.email}</p>
                         </div>
-
                         <div className="py-2">
-                            <Link 
-                            to="/dashboard" 
-                            className="block px-5 py-2.5 text-xs font-cinzel tracking-wider text-gray-400 hover:text-amber-400 hover:bg-amber-900/10 transition-colors uppercase"
-                            >
-                              My Dashboard
-                            </Link>
-                            <Link 
-                            to="/profile" 
-                            className="block px-5 py-2.5 text-xs font-cinzel tracking-wider text-gray-400 hover:text-amber-400 hover:bg-amber-900/10 transition-colors uppercase"
-                            >
-                              Profile Settings
-                            </Link>
+                            <Link to="/dashboard" className="block px-5 py-2.5 text-xs font-cinzel tracking-wider text-gray-400 hover:text-amber-400 hover:bg-amber-900/10 uppercase">My Dashboard</Link>
+                            <Link to="/profile" className="block px-5 py-2.5 text-xs font-cinzel tracking-wider text-gray-400 hover:text-amber-400 hover:bg-amber-900/10 uppercase">Profile Settings</Link>
                         </div>
-                        
                         <div className="h-px bg-amber-500/10 my-1 mx-4"></div>
-                        
                         <div className="py-2">
-                            <button 
-                              onClick={handleLogout} 
-                              className="block w-full text-left px-5 py-2.5 text-xs font-cinzel tracking-wider text-red-400 hover:bg-red-900/10 hover:text-red-300 transition-colors uppercase"
-                            >
-                              Sign Out
-                            </button>
+                            <button onClick={handleLogout} className="block w-full text-left px-5 py-2.5 text-xs font-cinzel tracking-wider text-red-400 hover:bg-red-900/10 hover:text-red-300 uppercase">Sign Out</button>
                         </div>
                     </div>
                   )}
@@ -197,9 +188,7 @@ const Home = () => {
               ) : (
                 <div className="flex items-center gap-4">
                   <Link to="/login" className="hidden md:block text-sm font-cinzel font-semibold text-amber-200/80 hover:text-amber-100">Log in</Link>
-                  <Link to="/register" className="px-6 py-2.5 text-xs font-cinzel font-bold tracking-widest text-[#050505] bg-gradient-to-r from-amber-300 to-yellow-500 rounded-full hover:shadow-[0_0_20px_rgba(251,191,36,0.4)] transition-all transform hover:-translate-y-0.5">
-                    Consult Now
-                  </Link>
+                  <Link to="/register" className="px-6 py-2.5 text-xs font-cinzel font-bold tracking-widest text-[#050505] bg-gradient-to-r from-amber-300 to-yellow-500 rounded-full hover:shadow-[0_0_20px_rgba(251,191,36,0.4)]">Consult Now</Link>
                 </div>
               )}
             </div>
@@ -208,7 +197,6 @@ const Home = () => {
       </nav>
 
       <main className="relative z-10 pt-32">
-        
         {/* Hero Section */}
         <section className="relative max-w-7xl mx-auto px-6 lg:px-8 text-center py-16">
             <div className="inline-block mb-6">
@@ -218,21 +206,14 @@ const Home = () => {
                     <span className="text-amber-400 text-lg">✦</span>
                 </div>
             </div>
-            
             <h1 className="font-cinzel text-5xl md:text-8xl font-medium tracking-tight mb-8 leading-tight text-white">
                 Destiny, <br />
-                <span className="italic font-playfair text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-200">
-                    Decoded.
-                </span>
+                <span className="italic font-playfair text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-200">Decoded.</span>
             </h1>
-
             <p className="max-w-2xl mx-auto font-playfair text-xl text-gray-400 mb-12 italic leading-relaxed">
                 "The stars do not compel, they incline." <br/>
-                <span className="text-base font-sans not-italic text-gray-500 mt-2 block">
-                    Connect with certified masters of the Vedic arts for clarity on love, career, and life's great tapestry.
-                </span>
+                <span className="text-base font-sans not-italic text-gray-500 mt-2 block">Connect with certified masters of the Vedic arts for clarity on love, career, and life's great tapestry.</span>
             </p>
-
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                 <Link to="/register" className="w-full sm:w-auto px-10 py-4 border border-amber-500/50 bg-[#1a1500] hover:bg-[#2a2200] text-amber-100 font-cinzel font-bold tracking-widest uppercase transition-all duration-300 relative overflow-hidden group">
                     <span className="relative z-10">Read My Chart</span>
@@ -249,19 +230,13 @@ const Home = () => {
                 <h2 className="font-cinzel text-3xl md:text-4xl text-amber-100 mb-3">Our Sacred Offerings</h2>
                 <p className="font-playfair italic text-gray-400">Services curated for the modern seeker</p>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {features.map((feature, idx) => (
-                    <div 
-                        key={idx} 
-                        className={`group relative p-8 bg-gradient-to-b ${feature.color} border border-white/5 hover:border-amber-500/40 transition-all duration-500`}
-                    >
-                        {/* Corner Accents */}
+                    <div key={idx} className={`group relative p-8 bg-gradient-to-b ${feature.color} border border-white/5 hover:border-amber-500/40 transition-all duration-500`}>
                         <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-amber-500/50"></div>
                         <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-amber-500/50"></div>
                         <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-amber-500/50"></div>
                         <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-amber-500/50"></div>
-
                         <div className="mb-6 opacity-80 group-hover:opacity-100 transition-opacity duration-300 transform group-hover:-translate-y-1">
                             {feature.icon}
                         </div>
@@ -272,7 +247,7 @@ const Home = () => {
             </div>
         </section>
 
-        {/* Testimonial */}
+        {/* Testimonial Section */}
         <section id="reviews" className="py-20 px-6">
             <div className="max-w-4xl mx-auto relative">
                 <div className="absolute -top-10 -left-10 text-9xl font-serif text-amber-500/10 leading-none">“</div>
@@ -291,7 +266,7 @@ const Home = () => {
             </div>
         </section>
 
-        {/* --- Map Section --- */}
+        {/* --- MAP SECTION (IMPLEMENTED) --- */}
         <section id="contact" className="relative pb-32 px-6 lg:px-8">
             <div className="max-w-5xl mx-auto">
                 <div className="text-center mb-10">
@@ -299,23 +274,29 @@ const Home = () => {
                     <div className="h-px w-20 bg-amber-500/50 mx-auto mt-4"></div>
                 </div>
                 
-                {/* Map Frame Placeholder */}
+                {/* Map Frame */}
                 <div className="relative p-2 border border-amber-500/20 rounded-sm">
                     {/* Inner gold border */}
                     <div className="absolute inset-2 border border-amber-500/10 pointer-events-none z-20"></div>
                     
-                    <div className="w-full h-[450px] overflow-hidden relative z-0 bg-[#0a0a0c] flex items-center justify-center">
-                        {/* Fallback Static Visual */}
-                         <div className="text-center opacity-40">
-                             <div className="w-24 h-24 rounded-full border border-amber-500/20 flex items-center justify-center mx-auto mb-4">
-                                <span className="text-4xl text-amber-500/50">✦</span>
-                             </div>
-                             <p className="font-cinzel text-amber-500/50 tracking-widest">Map View Unavailable</p>
-                             <p className="font-playfair italic text-gray-600 mt-2">Visit us at Mohali, Punjab</p>
-                         </div>
-                        
-                        {/* Vignette Overlay */}
-                        <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_80px_rgba(0,0,0,0.9)] z-[400]"></div>
+                    <div className="w-full h-[450px] relative z-0">
+                        <MapContainer 
+                            center={POSITION} 
+                            zoom={13} 
+                            scrollWheelZoom={false} 
+                            attributionControl={false}
+                        >
+                            {/* Dark Theme Map Tiles */}
+                            <TileLayer
+                                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                            />
+                            <Marker position={POSITION}>
+                                <Popup className="font-cinzel">
+                                    <span className="text-amber-900 font-bold">StarSync Sanctum</span> <br /> Mohali, Punjab
+                                </Popup>
+                            </Marker>
+                        </MapContainer>
                     </div>
                 </div>
                 

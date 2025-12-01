@@ -1,11 +1,10 @@
-import { findUserById, updateRefreshToken } from "../dao/auth.dao.js"
 import { googleLoginService, loginUserService, registerUserServices } from "../services/auth.services.js"
 import { successResponse, errorResponse } from "../utils/response.js"
 import { cookieOptionsForAcessToken, cookieOptionsForRefreshToken } from "./cookie.config.js"
 import authModel from "../models/auth.model.js"
 import sendEmail from "../utils/sendEmail.js"
 import crypto from "crypto"
-
+import { findUserById, updateRefreshToken } from "../dao/auth.dao.js"
 
 export const registerUserController = async (req, res, next) => {
     try {
@@ -62,8 +61,6 @@ export const getCurrentUserController = async (req, res, next) => {
     }
 }
 
-// --- Password Reset Logic (Your Changes) ---
-
 export const forgotPasswordController = async (req, res, next) => {
     try {
         const { email } = req.body
@@ -73,14 +70,11 @@ export const forgotPasswordController = async (req, res, next) => {
             return errorResponse(res, "Email could not be sent", 404)
         }
 
-        // Get Reset Token
         const resetToken = user.getResetPasswordToken()
-
-        // ValidateBeforeSave: false is important so we don't trip other validation rules
         await user.save({ validateBeforeSave: false })
 
-        // Create Reset URL
         const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`
+        // console.log(resetUrl) // Uncomment for local testing without email
 
         const message = `You have requested a password reset. Please go to this link to reset your password: \n\n ${resetUrl}`
 
@@ -90,9 +84,7 @@ export const forgotPasswordController = async (req, res, next) => {
                 subject: "StarSync Password Reset",
                 message
             })
-
             return successResponse(res, "Email sent successfully", {}, 200)
-
         } catch (error) {
             user.resetPasswordToken = undefined
             user.resetPasswordExpire = undefined
@@ -120,36 +112,34 @@ export const resetPasswordController = async (req, res, next) => {
             return errorResponse(res, "Invalid or expired token", 400)
         }
 
-
         user.password = req.body.password
         user.resetPasswordToken = undefined
         user.resetPasswordExpire = undefined
 
-        await user.save() 
+        await user.save()
 
         return successResponse(res, "Password updated successfully", {}, 200)
-
     } catch (error) {
         next(error)
     }
 }
 
-// --- Google Auth Logic (Main Branch Changes) ---
-
+// --- NEW: Google Controller ---
 export const googleLoginController = async (req, res, next) => {
-  try {
-    const { idToken } = req.body
+    try {
+        const { accessToken } = req.body
 
-    // Note: Ensure AppError is imported or use errorResponse here if AppError is undefined
-    if (!idToken) throw new Error("Google ID token is required") 
+        if (!accessToken) {
+             return errorResponse(res, "Google Access Token is required", 400)
+        }
 
-    const { user, token, refreshToken } = await googleLoginService(idToken)
+        const { user, token, refreshToken } = await googleLoginService(accessToken)
 
-    res.cookie("accessToken", token, cookieOptionsForAcessToken)
-    res.cookie("refreshToken", refreshToken, cookieOptionsForRefreshToken)
+        res.cookie("accessToken", token, cookieOptionsForAcessToken)
+        res.cookie("refreshToken", refreshToken, cookieOptionsForRefreshToken)
 
-    return successResponse(res, "Login successful", user, 200)
-  } catch (err) {
-    next(err)
-  }
+        return successResponse(res, "Login successful", user, 200)
+    } catch (err) {
+        next(err)
+    }
 }

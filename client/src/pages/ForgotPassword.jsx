@@ -25,6 +25,8 @@ export default function ForgotPassword() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#050505] text-[#e0e0e0] font-sans relative">
+      {/* Background */}
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap'); .font-cinzel { font-family: 'Cinzel', serif; }`}</style>
       <div className="fixed inset-0 pointer-events-none z-[0] opacity-[0.05]" style={{ backgroundImage: `url("https://www.transparenttextures.com/patterns/stardust.png")` }}></div>
       
       <div className="w-full max-w-md p-8 bg-[#0a0a0c]/90 border border-amber-500/20 rounded-sm relative z-10 shadow-xl">

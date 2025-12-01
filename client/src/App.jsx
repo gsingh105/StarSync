@@ -14,14 +14,16 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           
-          {/* --- New Routes --- */}
+          {/* Password Recovery Routes */}
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
 
+          {/* Protected Routes (Require Login) */}
           <Route
             path="/dashboard"
             element={

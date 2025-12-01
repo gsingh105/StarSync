@@ -1,10 +1,12 @@
 import express from "express"
-import { addAstrologerController } from "../controllers/astrolger.controllers.js"
+import { addAstrologerController, getAllAstrologersController } from "../controllers/astrologer.controllers.js"
 import { authMiddleware } from "../middlewares/autMiddleware.js"
-import { adminMiddleware } from "../middlewares/adminMiddleware.js"
+
 
 const router = express.Router()
 
-router.post("/add", authMiddleware, adminMiddleware,addAstrologerController)
+
+router.get("/", authMiddleware, getAllAstrologersController)
+router.post("/add", authMiddleware, addAstrologerController)
 
 export default router

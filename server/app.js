@@ -7,7 +7,7 @@ import cors from "cors"
 import connectDB from "./src/config/db.config.js"
 import { errorHandler } from "./src/utils/errorHanlder.js"
 import userRoutes from "./src/routes/auth.routes.js"
-import astrologerRoutes from "./src/routes/astrolger.routes.js"
+import astrologerRoutes from "./src/routes/astrologer.routes.js"
 
 const app = express()
 

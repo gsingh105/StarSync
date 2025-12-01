@@ -36,6 +36,11 @@ const astrologerSchema = new mongoose.Schema(
       type: Boolean,
       default: true
     },
+    price: {
+      type: Number,
+      required: true,
+      default: 50
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Admin", // Logged in admin 
