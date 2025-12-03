@@ -6,6 +6,7 @@ import {
     loginAstrologerController 
 } from "../controllers/astrologer.controllers.js";
 import { astrologerMiddleware } from "../middlewares/astrologerAuthMiddleware.js";
+import { authMiddleware } from "../middlewares/autMiddleware.js";
 
 
 const router = express.Router();
@@ -13,7 +14,7 @@ const router = express.Router();
 // Public Routes
 router.post("/login", loginAstrologerController);
 
-router.get("/", astrologerMiddleware, getAllAstrologersController);
+router.get("/", authMiddleware, getAllAstrologersController);
 router.post("/add",astrologerMiddleware, addAstrologerController);
 router.get("/current-astrologer",astrologerMiddleware, getCurrentAstrologer);
 

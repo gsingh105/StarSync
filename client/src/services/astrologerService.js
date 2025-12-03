@@ -68,6 +68,15 @@ const astrologerService = {
     } catch (error) {
       throw error.response?.data?.message || error.message;
     }
+  },
+
+  getAll: async() => {
+    try {
+      const response = await api.get('/')
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.message || error.message;
+    }
   }
 };
 

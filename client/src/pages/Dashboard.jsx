@@ -5,8 +5,11 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
   PieChart, Pie, Cell 
 } from 'recharts';
-import { useAuth } from '../context/AuthContext';
-import astrologerService from '../services/astrologerService';
+
+// --- IMPORTS ---
+import astrologerService from '../services/astrologerService'; 
+// 1. Import AuthContext
+import { useAuth } from '../context/AuthContext'; 
 
 // --- Icons ---
 const StarIcon = ({ className }) => (
@@ -19,48 +22,80 @@ const StarIcon = ({ className }) => (
 const COLORS = ['#f59e0b', '#b45309', '#78350f', '#fbbf24', '#d97706', '#92400e'];
 
 export default function Dashboard() {
+  // 2. Destructure user and logout from AuthContext
   const { user, logout } = useAuth();
+  
   const navigate = useNavigate();
   
   // State for Data
   const [astrologers, setAstrologers] = useState([]);
   const [filteredAstrologers, setFilteredAstrologers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   // State for Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [specializationFilter, setSpecializationFilter] = useState('All');
 
-  // 1. Fetch Data on Mount
+  // Fetch REAL Astrologer Data on Mount
   useEffect(() => {
     const fetchAstrologers = async () => {
       try {
-        const data = await astrologerService.getAll();
-        setAstrologers(data);
-        setFilteredAstrologers(data);
+        setLoading(true);
+        setError(null);
+
+        const response = await astrologerService.getAll();
+        
+        let dataArray = [];
+        
+        // Handle different backend response structures
+        if (response.data && Array.isArray(response.data)) {
+            dataArray = response.data;
+        } 
+        else if (Array.isArray(response)) {
+            dataArray = response;
+        }
+        else if (response.astrologers && Array.isArray(response.astrologers)) {
+            dataArray = response.astrologers;
+        }
+
+        setAstrologers(dataArray);
+        setFilteredAstrologers(dataArray);
       } catch (err) {
         console.error("Failed to load astrologers", err);
+        setError(typeof err === 'string' ? err : "Failed to connect to the server.");
       } finally {
         setLoading(false);
       }
     };
+
     fetchAstrologers();
   }, []);
 
-  // 2. Handle Search & Filter Logic
-  useEffect(() => {
-    let result = astrologers;
+  // 3. Update Handle Logout to use Context
+  const handleLogout = async () => {
+    try {
+        await logout(); // Calls authService.logout() AND clears context state
+        navigate('/login');
+    } catch (error) {
+        console.error("Logout failed", error);
+    }
+  };
 
-    // Apply Search (Name or Specialization)
+  // Search & Filter Logic
+  useEffect(() => {
+    if (!Array.isArray(astrologers)) return;
+
+    let result = [...astrologers];
+
     if (searchTerm) {
       const lowerTerm = searchTerm.toLowerCase();
       result = result.filter(astro => 
-        astro.name.toLowerCase().includes(lowerTerm) || 
-        astro.specialization.toLowerCase().includes(lowerTerm)
+        (astro.name && astro.name.toLowerCase().includes(lowerTerm)) || 
+        (astro.specialization && astro.specialization.toLowerCase().includes(lowerTerm))
       );
     }
 
-    // Apply Dropdown Filter
     if (specializationFilter !== 'All') {
       result = result.filter(astro => astro.specialization === specializationFilter);
     }
@@ -68,26 +103,25 @@ export default function Dashboard() {
     setFilteredAstrologers(result);
   }, [searchTerm, specializationFilter, astrologers]);
 
-  // 3. Prepare Chart Data (Memoized for performance)
+  // Prepare Chart Data
   const chartData = useMemo(() => {
-    if (!astrologers.length) return { pieData: [], barData: [] };
+    if (!Array.isArray(astrologers) || !astrologers.length) return { pieData: [], barData: [] };
 
-    // -- Pie Chart: Count by Specialization --
     const counts = {};
     const ratingSums = {};
     const ratingCounts = {};
 
     astrologers.forEach(astro => {
-      // Count
-      counts[astro.specialization] = (counts[astro.specialization] || 0) + 1;
+      const spec = astro.specialization || 'General';
+
+      counts[spec] = (counts[spec] || 0) + 1;
       
-      // Ratings
-      if (!ratingSums[astro.specialization]) {
-        ratingSums[astro.specialization] = 0;
-        ratingCounts[astro.specialization] = 0;
+      if (!ratingSums[spec]) {
+        ratingSums[spec] = 0;
+        ratingCounts[spec] = 0;
       }
-      ratingSums[astro.specialization] += (astro.rating || 0);
-      ratingCounts[astro.specialization] += 1;
+      ratingSums[spec] += (Number(astro.rating) || 0);
+      ratingCounts[spec] += 1;
     });
 
     const pieData = Object.keys(counts).map(key => ({
@@ -95,7 +129,6 @@ export default function Dashboard() {
       value: counts[key]
     }));
 
-    // -- Bar Chart: Avg Rating by Specialization --
     const barData = Object.keys(ratingSums).map(key => ({
       name: key,
       rating: parseFloat((ratingSums[key] / ratingCounts[key]).toFixed(1))
@@ -104,10 +137,13 @@ export default function Dashboard() {
     return { pieData, barData };
   }, [astrologers]);
 
-  // Extract unique specializations for the dropdown
-  const specializations = ['All', ...new Set(astrologers.map(a => a.specialization))];
+  const specializations = useMemo(() => {
+      if (!Array.isArray(astrologers)) return ['All'];
+      const specs = astrologers.map(a => a.specialization).filter(Boolean);
+      return ['All', ...new Set(specs)];
+  }, [astrologers]);
 
-  // Custom Tooltip for Recharts
+
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
@@ -134,9 +170,12 @@ export default function Dashboard() {
              <h1 className="text-xl font-cinzel font-bold text-amber-100 tracking-widest">StarSync Dashboard</h1>
           </div>
           <div className="flex items-center gap-6">
-             <span className="hidden md:inline text-xs font-cinzel text-amber-500/60 uppercase tracking-widest">Logged in as {user?.fullName}</span>
+             {/* 4. Display User FullName from Context */}
+             <span className="hidden md:inline text-xs font-cinzel text-amber-500/60 uppercase tracking-widest">
+                Logged in as {user?.fullName || user?.name || 'User'}
+             </span>
              <button 
-               onClick={() => { logout(); navigate('/login'); }} 
+               onClick={handleLogout} 
                className="flex items-center gap-2 text-red-400 text-xs font-bold uppercase hover:text-red-300 transition-colors border border-red-900/30 px-3 py-1.5 rounded-sm hover:bg-red-900/10"
              >
                <LogOut className="w-3 h-3" /> Sign Out
@@ -154,7 +193,7 @@ export default function Dashboard() {
         </div>
 
         {/* --- Analytics Graphs Section --- */}
-        {!loading && astrologers.length > 0 && (
+        {!loading && !error && astrologers.length > 0 && (
           <div className="mb-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
             
             {/* Chart 1: Distribution */}
@@ -262,6 +301,11 @@ export default function Dashboard() {
             <div className="flex justify-center py-20">
                 <div className="w-10 h-10 rounded-full border-2 border-amber-500 border-t-transparent animate-spin"></div>
             </div>
+        ) : error ? (
+            <div className="text-center py-20 border border-red-500/20 rounded-sm bg-[#0a0a0c]/50">
+               <p className="font-playfair text-red-400 italic">{error}</p>
+               <button onClick={() => window.location.reload()} className="mt-4 text-amber-500 hover:underline text-sm">Retry Connection</button>
+            </div>
         ) : filteredAstrologers.length === 0 ? (
             <div className="text-center py-20 border border-dashed border-amber-500/20 rounded-sm bg-[#0a0a0c]/50">
                <p className="font-playfair text-gray-500 italic">No masters found matching your criteria.</p>
@@ -293,7 +337,7 @@ export default function Dashboard() {
                                 <h3 className="font-cinzel text-lg text-amber-100 truncate pr-2">{astro.name}</h3>
                                 <div className="flex items-center gap-1 text-amber-500 text-xs font-bold bg-amber-900/20 px-1.5 py-0.5 rounded-sm border border-amber-500/20">
                                     <StarIcon className="w-3 h-3 fill-current" />
-                                    {astro.rating?.toFixed(1) || "N/A"}
+                                    {astro.rating ? Number(astro.rating).toFixed(1) : "N/A"}
                                 </div>
                             </div>
                             
@@ -305,12 +349,12 @@ export default function Dashboard() {
 
                             {/* Action Buttons */}
                             <div className="mt-auto grid grid-cols-2 gap-3">
-                                {/* Price Display (Replaces old Chat button) */}
+                                {/* Price Display */}
                                 <div className="py-2 border border-amber-500/30 bg-amber-500/5 text-amber-200 text-xs font-cinzel flex items-center justify-center gap-1">
                                     <span className="text-sm font-bold">₹{astro.price || 50}</span>/min
                                 </div>
                                 
-                                {/* Chat Now Button (Replaces old Call button) */}
+                                {/* Chat Now Button */}
                                 <button className="py-2 bg-amber-700 hover:bg-amber-600 text-[#050505] text-xs font-cinzel font-bold transition-all uppercase flex items-center justify-center gap-2">
                                     <MessageCircle className="w-3 h-3" />
                                     Chat Now
