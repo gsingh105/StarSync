@@ -1,52 +1,80 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import authService from '../services/authService';
+import astrologerService from '../services/astrologerService';
 
-const AuthContext = createContext(null);
+const AuthContext = createContext();
+
+export const useAuth = () => {
+  return useContext(AuthContext);
+};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Start loading true
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Check auth on initial load
+  // 1. CHECK SESSION ON MOUNT
+  // Since we use cookies, we can't just check localStorage for a token.
+  // We must ask the server "Am I logged in?" (via getCurrentAstrologer)
   useEffect(() => {
-    const initAuth = async () => {
+    const checkAuth = async () => {
       try {
-        const userData = await authService.checkAuth();
-        setUser(userData);
+        const userData = await astrologerService.getCurrentAstrologer();
+        if (userData) {
+          setUser(userData);
+          setIsAuthenticated(true);
+        }
       } catch (error) {
+        // If 401 or error, we are not logged in
+        console.log("Not authenticated or session expired");
         setUser(null);
+        setIsAuthenticated(false);
       } finally {
         setLoading(false);
       }
     };
-    initAuth();
+
+    checkAuth();
   }, []);
 
-  // Standard Login
-  const login = async (credentials) => {
-    const data = await authService.login(credentials);
-    setUser(data.data); 
-    return data;
+  const loginAstrologer = async (email, password) => {
+    setLoading(true);
+    try {
+      // Service handles the API call, Browser handles the cookie
+      const userData = await astrologerService.login(email, password);
+      
+      setUser(userData);
+      setIsAuthenticated(true);
+      return userData;
+    } catch (err) {
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Google Login Wrapper
-  const googleLogin = async (accessToken) => {
-    const data = await authService.googleLogin(accessToken);
-    setUser(data.data);
-    return data;
-  };
-
-  // Logout
   const logout = async () => {
-    await authService.logout();
+    // Optional: Call backend to clear cookie
+    await astrologerService.logout(); 
+    
     setUser(null);
+    setIsAuthenticated(false);
+    // Clear any local storage user data if you were keeping it for UI cache
+    localStorage.removeItem('astrologer_user'); 
+  };
+
+  const value = {
+    user,
+    loading,
+    isAuthenticated,
+    loginAstrologer,
+    logout
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, googleLogin, logout, setUser }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export default AuthContext;

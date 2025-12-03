@@ -26,7 +26,6 @@ const StarIcon = ({ className }) => (
   </svg>
 );
 
-// ... (Keep FeatureIcon1, FeatureIcon2, FeatureIcon3, Divider components as they were) ...
 const FeatureIcon1 = () => (
   <svg className="w-8 h-8 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path>
@@ -128,14 +127,14 @@ const Home = () => {
         }
       `}</style>
 
-      {/* ... Texture and Glows (Keep existing) ... */}
+      {/* ... Texture and Glows ... */}
       <div className="fixed inset-0 pointer-events-none z-[1] opacity-[0.03]" style={{ backgroundImage: `url("https://www.transparenttextures.com/patterns/stardust.png")` }}></div>
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[50rem] h-[50rem] bg-amber-600/10 rounded-full blur-[120px]"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[40rem] h-[40rem] bg-indigo-900/20 rounded-full blur-[100px]"></div>
       </div>
 
-      {/* --- Navigation (Keep existing) --- */}
+      {/* --- Navigation --- */}
       <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
         <div className="mx-auto max-w-7xl px-6 lg:px-8 mt-6">
           <div className="relative flex items-center justify-between h-20 px-8 rounded-full bg-[#0a0a0c]/80 backdrop-blur-xl border border-amber-500/20 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
@@ -163,9 +162,13 @@ const Home = () => {
               ) : user ? (
                 <div className="relative user-menu">
                   <button onClick={() => setShowDropdown(!showDropdown)} className="flex items-center gap-3 focus:outline-none group">
-                    <span className="hidden md:block text-sm font-playfair italic text-amber-100">{user.fullName}</span>
-                    <div className="w-10 h-10 rounded-full border border-amber-500/30 bg-[#15151a] flex items-center justify-center text-amber-400 font-cinzel shadow-lg group-hover:border-amber-400 transition-colors">
-                      {getUserInitials(user.fullName)}
+                    <span className="hidden md:block text-sm font-playfair italic text-amber-100">{user.name || user.fullName}</span>
+                    <div className="w-10 h-10 rounded-full border border-amber-500/30 bg-[#15151a] flex items-center justify-center text-amber-400 font-cinzel shadow-lg group-hover:border-amber-400 transition-colors overflow-hidden">
+                      {user.profileImage ? (
+                          <img src={user.profileImage} alt="profile" className="w-full h-full object-cover" />
+                      ) : (
+                          getUserInitials(user.name || user.fullName)
+                      )}
                     </div>
                   </button>
                   {showDropdown && (
@@ -173,9 +176,14 @@ const Home = () => {
                         <div className="px-5 py-4 border-b border-amber-500/10">
                           <p className="text-[10px] font-cinzel text-amber-500 tracking-widest uppercase mb-1">Signed in as</p>
                           <p className="text-sm font-playfair text-amber-100 truncate italic">{user.email}</p>
+                          {user.role === 'astrologer' && (
+                              <span className="inline-block mt-1 text-[10px] bg-amber-900/30 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/20">MASTER ACCOUNT</span>
+                          )}
                         </div>
                         <div className="py-2">
-                            <Link to="/dashboard" className="block px-5 py-2.5 text-xs font-cinzel tracking-wider text-gray-400 hover:text-amber-400 hover:bg-amber-900/10 uppercase">My Dashboard</Link>
+                            <Link to={user.role === 'astrologer' ? "/astrologer/dashboard" : "/dashboard"} className="block px-5 py-2.5 text-xs font-cinzel tracking-wider text-gray-400 hover:text-amber-400 hover:bg-amber-900/10 uppercase">
+                                {user.role === 'astrologer' ? "Partner Dashboard" : "My Dashboard"}
+                            </Link>
                             <Link to="/profile" className="block px-5 py-2.5 text-xs font-cinzel tracking-wider text-gray-400 hover:text-amber-400 hover:bg-amber-900/10 uppercase">Profile Settings</Link>
                         </div>
                         <div className="h-px bg-amber-500/10 my-1 mx-4"></div>
@@ -187,6 +195,11 @@ const Home = () => {
                 </div>
               ) : (
                 <div className="flex items-center gap-4">
+                  {/* --- NEW ASTROLOGER LOGIN BUTTON --- */}
+                  <Link to="/astrologer/login" className="hidden lg:block text-[10px] font-cinzel font-bold text-amber-500/60 hover:text-amber-500 uppercase tracking-widest mr-2 transition-colors">
+                     Partner Login
+                  </Link>
+
                   <Link to="/login" className="hidden md:block text-sm font-cinzel font-semibold text-amber-200/80 hover:text-amber-100">Log in</Link>
                   <Link to="/register" className="px-6 py-2.5 text-xs font-cinzel font-bold tracking-widest text-[#050505] bg-gradient-to-r from-amber-300 to-yellow-500 rounded-full hover:shadow-[0_0_20px_rgba(251,191,36,0.4)]">Consult Now</Link>
                 </div>
@@ -266,7 +279,7 @@ const Home = () => {
             </div>
         </section>
 
-        {/* --- MAP SECTION (IMPLEMENTED) --- */}
+        {/* --- MAP SECTION --- */}
         <section id="contact" className="relative pb-32 px-6 lg:px-8">
             <div className="max-w-5xl mx-auto">
                 <div className="text-center mb-10">
