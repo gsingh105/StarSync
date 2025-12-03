@@ -29,8 +29,9 @@ app.use(cookieParser())
 
 
 app.use("/api/auth", userRoutes)
-
 app.use("/api/astrologer", astrologerRoutes)
+
+
 
 
 

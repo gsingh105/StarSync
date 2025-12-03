@@ -1,18 +1,13 @@
 import { addAstrologerService, getAllAstrologersService, loginAstrologerServices } from "../services/astrologer.services.js";
+import { BadRequestError } from "../utils/errorHanlder.js";
 import { successResponse } from "../utils/response.js";
-
-const cookieOptionsForAccessToken = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', 
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 1000 
-};
+import { cookieOptionsForAcessToken } from "./cookie.config.js";
 
 export const addAstrologerController = async (req, res, next) => {
     try {
         const astroData = {
             ...req.body,
-            createdBy: req.user ? req.user._id : null 
+            createdBy: req.user ? req.user._id : null
         };
         const result = await addAstrologerService(astroData);
         return successResponse(res, "Astrologer added successfully", result, 201);
@@ -32,31 +27,35 @@ export const getAllAstrologersController = async (req, res, next) => {
 
 export const loginAstrologerController = async (req, res, next) => {
     try {
-        const { email } = req.body; 
-        
-        if (!email) {
-            const error = new Error("Please provide both email and password");
-            error.statusCode = 400;
-            throw error;
-        }
-
-
+        const { email } = req.body;
+        if (!email) throw new BadRequestError("Email is required")
         const { astrologer, token } = await loginAstrologerServices(email);
 
-        res.cookie("accessToken", token, cookieOptionsForAccessToken);
+        res.cookie("accessToken", token, cookieOptionsForAcessToken);
         req.astrologer = astrologer;
 
-        res.status(200).json({
-            success: true,
-            message: "Astrologer logged in successfully",
-            token, 
-            astrologer
-        });
+        // res.status(200).json({
+        //     success: true,
+        //     message: "Astrologer logged in successfully",
+        //     token,
+        //     astrologer
+        // });
+        return successResponse(res,"Astrologer logged in successfully",astrologer,200)
 
     } catch (error) {
         next(error);
     }
 };
+
+export const logoutAstrolgerController = async (req, res, next) => {
+    try {
+        res.clearCookie("accessToken", cookieOptionsForAcessToken)
+        return successResponse(res, "Astrologer logout successfully", 200)
+    } catch (error) {
+        next(error)
+    }
+
+}
 
 export const getCurrentAstrologer = async (req, res, next) => {
     try {
