@@ -3,12 +3,12 @@ dotenv.config()
 
 import express from "express"
 import cookieParser from "cookie-parser"
-import cors from "cors" 
+import cors from "cors"
 import connectDB from "./src/config/db.config.js"
 import { errorHandler } from "./src/utils/errorHanlder.js"
 import userRoutes from "./src/routes/auth.routes.js"
 import astrologerRoutes from "./src/routes/astrologer.routes.js"
-
+import sessionRoutes from "./src/routes/session.routes.js"
 const app = express()
 
 const PORT = process.env.PORT || 3000
@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 3000
 const corsOptions = {
     origin: 'http://localhost:5173',
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], 
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
@@ -30,9 +30,7 @@ app.use(cookieParser())
 
 app.use("/api/auth", userRoutes)
 app.use("/api/astrologer", astrologerRoutes)
-
-
-
+app.use("/session", sessionRoutes);
 
 
 app.use(errorHandler)

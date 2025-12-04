@@ -1,351 +1,283 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, LogOut, TrendingUp, PieChart as PieIcon, MessageCircle } from 'lucide-react';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
-  PieChart, Pie, Cell 
+import { Search, Filter, LogOut, TrendingUp, PieChart as PieIcon, MessageCircle, Star } from 'lucide-react';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell
 } from 'recharts';
 
-// --- IMPORTS ---
-import astrologerService from '../services/astrologerService'; 
-import { useAuth } from '../context/AuthContext'; 
-// 1. IMPORT VIDEO ROOM COMPONENT
-import LiveVideoRoom from '../components/LiveVideoRoom';
+import astrologerService from '../services/astrologerService';
+import { useAuth } from '../context/AuthContext';
 
-// --- Icons ---
-const StarIcon = ({ className }) => (
+const StarIcon = ({ className = "w-6 h-6" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
     <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
   </svg>
 );
 
-const COLORS = ['#f59e0b', '#b45309', '#78350f', '#fbbf24', '#d97706', '#92400e'];
+const COLORS = ['#f59e0b', '#f97316', '#ea580c', '#dc2626', '#92400e', '#7c2d12'];
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  
-  // State for Data
+
   const [astrologers, setAstrologers] = useState([]);
   const [filteredAstrologers, setFilteredAstrologers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // State for Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [specializationFilter, setSpecializationFilter] = useState('All');
 
-  // 2. STATE FOR ACTIVE CALL
-  const [activeCallAstrologerId, setActiveCallAstrologerId] = useState(null);
-
-  // Fetch Data
   useEffect(() => {
     const fetchAstrologers = async () => {
       try {
         setLoading(true);
-        setError(null);
         const response = await astrologerService.getAll();
-        
-        let dataArray = [];
-        if (response.data && Array.isArray(response.data)) {
-            dataArray = response.data;
-        } else if (Array.isArray(response)) {
-            dataArray = response;
-        } else if (response.astrologers && Array.isArray(response.astrologers)) {
-            dataArray = response.astrologers;
-        }
-
-        setAstrologers(dataArray);
-        setFilteredAstrologers(dataArray);
+        const data = Array.isArray(response) ? response : response.data || response.astrologers || [];
+        setAstrologers(data);
+        setFilteredAstrologers(data);
       } catch (err) {
-        console.error("Failed to load astrologers", err);
-        setError(typeof err === 'string' ? err : "Failed to connect to the server.");
+        setError("Failed to load astrologers. Please try again.");
       } finally {
         setLoading(false);
       }
     };
-
     fetchAstrologers();
   }, []);
 
   const handleLogout = async () => {
-    try {
-        await logout();
-        navigate('/login');
-    } catch (error) {
-        console.error("Logout failed", error);
-    }
+    await logout();
+    navigate('/login');
   };
 
-  // Search & Filter Logic
   useEffect(() => {
-    if (!Array.isArray(astrologers)) return;
     let result = [...astrologers];
     if (searchTerm) {
-      const lowerTerm = searchTerm.toLowerCase();
-      result = result.filter(astro => 
-        (astro.name && astro.name.toLowerCase().includes(lowerTerm)) || 
-        (astro.specialization && astro.specialization.toLowerCase().includes(lowerTerm))
+      const term = searchTerm.toLowerCase();
+      result = result.filter(a =>
+        a.name?.toLowerCase().includes(term) ||
+        a.specialization?.toLowerCase().includes(term)
       );
     }
     if (specializationFilter !== 'All') {
-      result = result.filter(astro => astro.specialization === specializationFilter);
+      result = result.filter(a => a.specialization === specializationFilter);
     }
     setFilteredAstrologers(result);
   }, [searchTerm, specializationFilter, astrologers]);
 
-  // Chart Data Preparation
-  const chartData = useMemo(() => {
-    if (!Array.isArray(astrologers) || !astrologers.length) return { pieData: [], barData: [] };
-    const counts = {};
-    const ratingSums = {};
-    const ratingCounts = {};
+  const { pieData, barData } = useMemo(() => {
+    if (!astrologers.length) return { pieData: [], barData: [] };
+    const specCount = {};
+    const ratingSum = {}, ratingCount = {};
 
-    astrologers.forEach(astro => {
-      const spec = astro.specialization || 'General';
-      counts[spec] = (counts[spec] || 0) + 1;
-      if (!ratingSums[spec]) {
-        ratingSums[spec] = 0;
-        ratingCounts[spec] = 0;
-      }
-      ratingSums[spec] += (Number(astro.rating) || 0);
-      ratingCounts[spec] += 1;
+    astrologers.forEach(a => {
+      const spec = a.specialization || "General";
+      specCount[spec] = (specCount[spec] || 0) + 1;
+      ratingSum[spec] = (ratingSum[spec] || 0) + (Number(a.rating) || 0);
+      ratingCount[spec] = (ratingCount[spec] || 0) + 1;
     });
 
-    const pieData = Object.keys(counts).map(key => ({
-      name: key,
-      value: counts[key]
+    const pie = Object.keys(specCount).map(k => ({ name: k, value: specCount[k] }));
+    const bar = Object.keys(ratingSum).map(k => ({
+      name: k,
+      rating: Number((ratingSum[k] / ratingCount[k]).toFixed(1))
     }));
 
-    const barData = Object.keys(ratingSums).map(key => ({
-      name: key,
-      rating: parseFloat((ratingSums[key] / ratingCounts[key]).toFixed(1))
-    }));
-
-    return { pieData, barData };
+    return { pieData: pie, barData: bar };
   }, [astrologers]);
 
-  const specializations = useMemo(() => {
-      if (!Array.isArray(astrologers)) return ['All'];
-      const specs = astrologers.map(a => a.specialization).filter(Boolean);
-      return ['All', ...new Set(specs)];
-  }, [astrologers]);
-
-
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-[#0a0a0c] border border-amber-500/30 p-3 rounded shadow-xl">
-          <p className="font-cinzel text-amber-100 text-sm mb-1">{label || payload[0].name}</p>
-          <p className="text-amber-500 text-xs font-bold">
-            {payload[0].value} {payload[0].payload.rating ? 'Stars' : 'Experts'}
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  // --- 3. VIDEO CALL HANDLERS ---
-  const handleStartCall = (astroId) => {
-    setActiveCallAstrologerId(astroId);
-  };
-
-  const handleEndCall = () => {
-    setActiveCallAstrologerId(null);
-  };
-
-  // --- 4. RENDER VIDEO ROOM IF ACTIVE ---
-  if (activeCallAstrologerId) {
-    return (
-      <div className="fixed inset-0 z-[100] bg-black">
-        <LiveVideoRoom 
-            userId={user._id} // Current Logged in User
-            astrologerId={activeCallAstrologerId} // Selected Astrologer
-            role="user" 
-            onEndCall={handleEndCall} 
-        />
-      </div>
-    );
-  }
+  const specializations = ['All', ...new Set(astrologers.map(a => a.specialization).filter(Boolean))];
 
   return (
-    <div className="min-h-screen bg-[#050505] text-[#e0e0e0] font-sans pb-20">
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap'); .font-cinzel { font-family: 'Cinzel', serif; }`}</style>
-      
-      {/* --- Top Navbar --- */}
-      <nav className="border-b border-amber-500/20 bg-[#0a0a0c]/80 sticky top-0 z-50 backdrop-blur-md">
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-             <StarIcon className="w-5 h-5 text-amber-500" />
-             <h1 className="text-xl font-cinzel font-bold text-amber-100 tracking-widest">StarSync Dashboard</h1>
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-50 text-gray-900">
+
+      {/* Subtle Golden Glow Orbs */}
+      <div className="fixed inset-0 pointer-events-none opacity-30">
+        <div className="absolute top-20 left-1/4 w-96 h-96 bg-amber-300 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-32 right-1/3 w-80 h-80 bg-amber-400 rounded-full blur-3xl" />
+      </div>
+
+      {/* Top Navbar - Light */}
+      <nav className="relative z-50 border-b border-amber-200  bg-white backdrop-blur-xl shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="absolute inset-0 blur-xl bg-amber-400 opacity-40 scale-150" />
+            </div>
+            <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700">
+              StarSync
+            </h1>
           </div>
           <div className="flex items-center gap-6">
-             <span className="hidden md:inline text-xs font-cinzel text-amber-500/60 uppercase tracking-widest">
-                Logged in as {user?.fullName}
-             </span>
-             <button 
-               onClick={handleLogout} 
-               className="flex items-center gap-2 text-red-400 text-xs font-bold uppercase hover:text-red-300 transition-colors border border-red-900/30 px-3 py-1.5 rounded-sm hover:bg-red-900/10"
-             >
-               <LogOut className="w-3 h-3" /> Sign Out
-             </button>
+            <span className="hidden md:block text-sm font-medium text-amber-700">
+              Welcome, {user?.fullName || user?.name}
+            </span>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-5 py-2.5 bg-amber-100 border border-amber-300 rounded-full text-amber-800 hover:bg-amber-200 transition font-medium"
+            >
+              <LogOut className="w-4 h-4" /> Sign Out
+            </button>
           </div>
         </div>
       </nav>
 
-      <div className="container mx-auto px-6 py-12 max-w-7xl">
-        
-        {/* --- Header Section --- */}
-        <div className="mb-12 border-l-2 border-amber-500 pl-6">
-          <h2 className="font-cinzel text-3xl md:text-4xl text-amber-100 mb-2">Sanctum of Wisdom</h2>
-          <p className="font-playfair italic text-gray-400">Connect with masters of the ancient arts.</p>
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-12">
+
+        {/* Hero Title */}
+        <div className="text-center mb-16">
+          <h2 className="text-5xl md:text-6xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700 mb-4">
+            Sanctum of Cosmic Masters
+          </h2>
+          <p className="text-xl text-amber-800 font-light tracking-wide max-w-3xl mx-auto">
+            Connect with enlightened souls guided by ancient wisdom and celestial light
+          </p>
         </div>
 
-        {/* --- Analytics Graphs Section --- */}
-        {!loading && !error && astrologers.length > 0 && (
-          <div className="mb-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Pie Chart */}
-            <div className="bg-[#0a0a0c] border border-amber-500/10 p-6 rounded-sm shadow-lg relative overflow-hidden group hover:border-amber-500/30 transition-colors">
-              <div className="flex items-center gap-2 mb-6 border-b border-amber-500/10 pb-2">
-                <PieIcon className="w-4 h-4 text-amber-500" />
-                <h3 className="font-cinzel text-lg text-amber-100">Distribution of Arts</h3>
+        {/* Charts Section */}
+        {astrologers.length > 0 && (
+          <div className="grid lg:grid-cols-2 gap-10 mb-16">
+            <div className="bg-white/90 backdrop-blur-sm border border-amber-200 rounded-3xl p-8 shadow-xl hover:shadow-2xl hover:shadow-amber-100 transition group">
+              <div className="flex items-center gap-3 mb-6">
+                <PieIcon className="w-7 h-7 text-amber-600" />
+                <h3 className="text-2xl font-bold text-amber-800">Masters by Art</h3>
               </div>
-              <div className="h-64 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={chartData.pieData}
-                      cx="50%" cy="50%"
-                      innerRadius={60} outerRadius={80}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {chartData.pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="rgba(0,0,0,0.5)" />
-                      ))}
-                    </Pie>
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend verticalAlign="middle" align="right" layout="vertical" iconType="circle" formatter={(value) => <span className="text-gray-400 text-xs font-cinzel ml-2">{value}</span>} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={70}
+                    outerRadius={110}
+                    paddingAngle={4}
+                    dataKey="value"
+                  >
+                    {pieData.map((_, i) => (
+                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ background: 'white', border: '1px solid #ddd', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}
+                    labelStyle={{ color: '#333', fontWeight: 'bold' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
 
-            {/* Bar Chart */}
-            <div className="bg-[#0a0a0c] border border-amber-500/10 p-6 rounded-sm shadow-lg group hover:border-amber-500/30 transition-colors">
-               <div className="flex items-center gap-2 mb-6 border-b border-amber-500/10 pb-2">
-                <TrendingUp className="w-4 h-4 text-amber-500" />
-                <h3 className="font-cinzel text-lg text-amber-100">Avg. Rating by Specialization</h3>
+            <div className="bg-white/90 backdrop-blur-sm border border-amber-200 rounded-3xl p-8 shadow-xl hover:shadow-2xl hover:shadow-amber-100 transition group">
+              <div className="flex items-center gap-3 mb-6">
+                <TrendingUp className="w-7 h-7 text-amber-600" />
+                <h3 className="text-2xl font-bold text-amber-800">Rating Excellence</h3>
               </div>
-              <div className="h-64 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData.barData} margin={{ top: 10, right: 30, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                    <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 10, fontFamily: 'Cinzel' }} axisLine={{ stroke: '#333' }} tickLine={false} />
-                    <YAxis tick={{ fill: '#9ca3af', fontSize: 10 }} axisLine={false} tickLine={false} domain={[0, 5]} />
-                    <Tooltip content={<CustomTooltip />} cursor={{fill: 'rgba(245, 158, 11, 0.05)'}} />
-                    <Bar dataKey="rating" radius={[4, 4, 0, 0]}>
-                      {chartData.barData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={barData}>
+                  <CartesianGrid strokeDasharray="4 4" stroke="#eee" />
+                  <XAxis dataKey="name" tick={{ fill: '#666' }} />
+                  <YAxis domain={[0, 5]} ticks={[0, 1, 2, 3, 4, 5]} />
+                  <Tooltip
+                    contentStyle={{ background: 'white', border: '1px solid #ddd', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}
+                  />
+                  <Bar dataKey="rating" radius={[8, 8, 0, 0]}>
+                    {barData.map((_, i) => (
+                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
         )}
 
-        {/* --- Search & Filter Bar --- */}
-        <div className="mb-10 bg-[#0a0a0c] border border-amber-500/20 p-4 rounded-sm flex flex-col md:flex-row gap-4 items-center justify-between shadow-lg">
-           <div className="relative w-full md:w-1/2">
-               <Search className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
-               <input 
-                   type="text" 
-                   placeholder="Search by name or art..." 
-                   value={searchTerm}
-                   onChange={(e) => setSearchTerm(e.target.value)}
-                   className="w-full bg-[#121212] border border-amber-500/20 rounded-sm py-2.5 pl-10 pr-4 text-sm text-gray-300 focus:outline-none focus:border-amber-500/50 transition-colors placeholder-gray-600"
-               />
-           </div>
-           <div className="relative w-full md:w-1/4">
-               <Filter className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
-               <select 
-                   value={specializationFilter}
-                   onChange={(e) => setSpecializationFilter(e.target.value)}
-                   className="w-full bg-[#121212] border border-amber-500/20 rounded-sm py-2.5 pl-10 pr-4 text-sm text-gray-300 focus:outline-none focus:border-amber-500/50 appearance-none cursor-pointer"
-               >
-                   {specializations.map(spec => (
-                       <option key={spec} value={spec}>{spec}</option>
-                   ))}
-               </select>
-           </div>
+        {/* Search & Filter */}
+        <div className="mb-12 flex flex-col md:flex-row gap-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-amber-600" />
+            <input
+              type="text"
+              placeholder="Seek a master by name or art..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-14 pr-6 py-5 bg-white border border-amber-200 rounded-2xl text-gray-800 placeholder-amber-400 focus:border-amber-500 focus:outline-none focus:ring-4 focus:ring-amber-100 transition"
+            />
+          </div>
+          <div className="relative md:w-64">
+            <Filter className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-amber-600" />
+            <select
+              value={specializationFilter}
+              onChange={(e) => setSpecializationFilter(e.target.value)}
+              className="w-full pl-14 pr-6 py-5 bg-white border border-amber-200 rounded-2xl text-gray-800 focus:border-amber-500 focus:outline-none focus:ring-4 focus:ring-amber-100 transition cursor-pointer appearance-none"
+            >
+              {specializations.map(s => (
+                <option key={s} value={s}>{s === 'All' ? 'All Specializations' : s}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        {/* --- Astrologer Grid --- */}
+        {/* Astrologer Grid */}
         {loading ? (
-           <div className="flex justify-center py-20">
-               <div className="w-10 h-10 rounded-full border-2 border-amber-500 border-t-transparent animate-spin"></div>
-           </div>
+          <div className="flex justify-center py-32">
+            <div className="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+          </div>
         ) : error ? (
-           <div className="text-center py-20 border border-red-500/20 rounded-sm bg-[#0a0a0c]/50">
-              <p className="font-playfair text-red-400 italic">{error}</p>
-              <button onClick={() => window.location.reload()} className="mt-4 text-amber-500 hover:underline text-sm">Retry Connection</button>
-           </div>
+          <div className="text-center py-20 bg-white/80 border border-red-200 rounded-3xl">
+            <p className="text-red-600 text-xl mb-4">{error}</p>
+            <button onClick={() => window.location.reload()} className="text-amber-600 hover:underline font-medium">Retry</button>
+          </div>
         ) : filteredAstrologers.length === 0 ? (
-           <div className="text-center py-20 border border-dashed border-amber-500/20 rounded-sm bg-[#0a0a0c]/50">
-              <p className="font-playfair text-gray-500 italic">No masters found matching your criteria.</p>
-              <button onClick={() => {setSearchTerm(''); setSpecializationFilter('All');}} className="mt-4 text-amber-500 hover:underline text-sm">Clear Filters</button>
-           </div>
+          <div className="text-center py-20 bg-white/80 border border-amber-200 rounded-3xl">
+            <p className="text-amber-700 text-xl italic">No enlightened souls match your search.</p>
+            <button onClick={() => { setSearchTerm(''); setSpecializationFilter('All'); }} className="mt-4 text-amber-600 hover:underline font-medium">Clear Filters</button>
+          </div>
         ) : (
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-               {filteredAstrologers.map((astro) => (
-                   <div key={astro._id} className="bg-[#0a0a0c] border border-amber-500/20 rounded-sm overflow-hidden hover:border-amber-500/50 transition-all duration-300 group flex flex-col relative">
-                       <div className="h-48 bg-[#121212] relative overflow-hidden">
-                           {astro.profileImage ? (
-                               <img src={astro.profileImage} alt={astro.name} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity grayscale group-hover:grayscale-0" />
-                           ) : (
-                               <div className="w-full h-full flex items-center justify-center bg-gradient-to-b from-[#1a1625] to-[#0a0a0c]">
-                                   <StarIcon className="w-16 h-16 text-amber-500/10" />
-                               </div>
-                           )}
-                           <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-sm px-2 py-1 rounded-sm border border-amber-500/30">
-                               <span className="text-[10px] font-cinzel text-amber-400">{astro.experienceYears} Yrs Exp</span>
-                           </div>
-                       </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {filteredAstrologers.map((astro) => (
+              <div
+                key={astro._id}
+                className="group relative bg-white border border-amber-200 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-amber-100 transition-all duration-500 transform hover:-translate-y-4"
+              >
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none">
+                  <div className="absolute inset-0 bg-gradient-to-t from-amber-100/50 to-transparent" />
+                </div>
 
-                       <div className="p-5 flex-1 flex flex-col">
-                           <div className="flex justify-between items-start mb-2">
-                               <h3 className="font-cinzel text-lg text-amber-100 truncate pr-2">{astro.name}</h3>
-                               <div className="flex items-center gap-1 text-amber-500 text-xs font-bold bg-amber-900/20 px-1.5 py-0.5 rounded-sm border border-amber-500/20">
-                                   <StarIcon className="w-3 h-3 fill-current" />
-                                   {astro.rating ? Number(astro.rating).toFixed(1) : "N/A"}
-                               </div>
-                           </div>
-                           <div className="mb-4">
-                               <span className="inline-block px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 text-[10px] font-cinzel text-amber-300 uppercase tracking-wider rounded-sm">
-                                   {astro.specialization}
-                               </span>
-                           </div>
+                <div className="h-64 relative overflow-hidden bg-gradient-to-br from-amber-50 to-white">
+                  {astro.profileImage ? (
+                    <img src={astro.profileImage} alt={astro.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <StarIcon className="w-28 h-28 text-amber-200" />
+                    </div>
+                  )}
+                  <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-md border border-amber-300">
+                    <span className="text-sm font-bold text-amber-700">{astro.experienceYears} yrs</span>
+                  </div>
+                </div>
 
-                           <div className="mt-auto grid grid-cols-2 gap-3">
-                               <div className="py-2 border border-amber-500/30 bg-amber-500/5 text-amber-200 text-xs font-cinzel flex items-center justify-center gap-1">
-                                   <span className="text-sm font-bold">₹{astro.price || 50}</span>/min
-                               </div>
-                               {/* 5. CONNECT BUTTON TO HANDLER */}
-                               <button 
-                                 onClick={() => handleStartCall(astro._id)}
-                                 className="py-2 bg-amber-700 hover:bg-amber-600 text-[#050505] text-xs font-cinzel font-bold transition-all uppercase flex items-center justify-center gap-2"
-                               >
-                                   <MessageCircle className="w-3 h-3" />
-                                   Chat Now
-                               </button>
-                           </div>
-                       </div>
-                   </div>
-               ))}
-           </div>
+                <div className="p-6">
+                  <div className="flex justify-between items-start mb-3">
+                    <h3 className="text-xl font-bold text-gray-900 group-hover:text-amber-700 transition">{astro.name}</h3>
+                    <div className="flex items-center gap-1 bg-amber-100 px-3 py-1.5 rounded-full">
+                      <Star className="w-4 h-4 text-amber-600 fill-current" />
+                      <span className="text-sm font-bold text-amber-700">{astro.rating || '5.0'}</span>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-amber-700 font-medium mb-6 italic">{astro.specialization}</p>
+
+                  <div className="flex gap-3">
+                    <div className="flex-1 text-center py-3 bg-amber-50 border border-amber-300 rounded-xl text-amber-800 font-bold">
+                      ₹{astro.price || 99}/min
+                    </div>
+                    <button className="flex-1 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold rounded-xl shadow-lg shadow-amber-300 hover:shadow-amber-400 transition-all flex items-center justify-center gap-2">
+                      <MessageCircle className="w-5 h-5" />
+                      Chat Now
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>

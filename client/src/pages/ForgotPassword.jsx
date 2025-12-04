@@ -24,53 +24,85 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#050505] text-[#e0e0e0] font-sans relative">
-      {/* Background */}
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap'); .font-cinzel { font-family: 'Cinzel', serif; }`}</style>
-      <div className="fixed inset-0 pointer-events-none z-[0] opacity-[0.05]" style={{ backgroundImage: `url("https://www.transparenttextures.com/patterns/stardust.png")` }}></div>
-      
-      <div className="w-full max-w-md p-8 bg-[#0a0a0c]/90 border border-amber-500/20 rounded-sm relative z-10 shadow-xl">
-        <h1 className="text-2xl font-cinzel text-amber-100 mb-2">Forgot Password?</h1>
-        <p className="text-gray-400 text-sm mb-6">Enter your email to receive a cosmic reset link.</p>
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-50 flex items-center justify-center px-4">
 
-        {status.message && (
-          <div className={`p-3 mb-4 text-sm rounded border ${
-            status.type === 'success' 
-              ? 'bg-green-900/20 text-green-400 border-green-500/30' 
-              : 'bg-red-900/20 text-red-400 border-red-500/30'
+      {/* Soft Golden Glow */}
+      <div className="fixed inset-0 pointer-events-none opacity-30">
+        <div className="absolute top-20 left-20 w-96 h-96 bg-amber-300 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-20 w-80 h-80 bg-amber-400 rounded-full blur-3xl" />
+      </div>
+
+      <div className="w-full max-w-md">
+
+        {/* Main Card */}
+        <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-amber-200 p-10 relative overflow-hidden">
+
+          {/* Subtle Header Glow */}
+          <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-amber-100/30 to-transparent pointer-events-none" />
+
+          <div className="relative z-10 text-center mb-8">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full mb-6 shadow-lg">
+              <Mail className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Forgot Password?</h1>
+            <p className="text-amber-700 text-lg">Enter your email to receive a reset link</p>
+          </div>
+
+          {/* Status Message */}
+          {status.message && (
+            <div className={`mb-6 p-4 rounded-2xl border text-center font-medium transition-all ${
+              status.type === 'success'
+                ? 'bg-green-50 border-green-300 text-green-700'
+                : 'bg-red-50 border-red-300 text-red-700'
             }`}>
-            {status.message}
+              {status.message}
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-semibold text-amber-800 mb-2">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-600" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@starsync.com"
+                  required
+                  className="w-full pl-12 pr-5 py-4 bg-amber-50/70 border border-amber-300 rounded-2xl text-gray-800 placeholder-amber-500 focus:outline-none focus:ring-4 focus:ring-amber-200 transition"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed transform hover:scale-[1.02]"
+            >
+              {loading ? 'Sending Link...' : 'Send Reset Link'}
+            </button>
+          </form>
+
+          {/* Back to Login */}
+          <div className="mt-8 text-center">
+            <Link
+              to="/login"
+              className="inline-flex items-center gap-2 text-amber-700 hover:text-amber-800 font-medium transition"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              Back to Login
+            </Link>
           </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="relative">
-            <label className="block text-xs font-cinzel font-semibold tracking-widest text-amber-500/80 mb-2 uppercase">Email Address</label>
-            <Mail className="absolute left-3 top-9 h-5 w-5 text-gray-500" />
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="seeker@starsync.com"
-              required
-              className="w-full bg-[#121212] pl-10 pr-4 py-2.5 border border-amber-500/20 rounded-sm focus:border-amber-500/60 focus:outline-none text-amber-50 placeholder-gray-700"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-amber-700 to-amber-900 hover:from-amber-600 hover:to-amber-800 text-amber-100 py-2.5 rounded-sm font-cinzel font-bold tracking-widest transition-all disabled:opacity-50"
-          >
-            {loading ? 'Sending...' : 'Send Reset Link'}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <Link to="/login" className="flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-amber-400 transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Back to Login
-          </Link>
         </div>
+
+        {/* Footer Text */}
+        <p className="text-center text-amber-700 mt-8 text-sm">
+          The stars will guide you back
+        </p>
       </div>
     </div>
   );
