@@ -28,8 +28,11 @@ export const getAllAstrologersController = async (req, res, next) => {
 export const loginAstrologerController = async (req, res, next) => {
     try {
         const { email } = req.body;
+        // console.log(email)
         if (!email) throw new BadRequestError("Email is required")
         const { astrologer, token } = await loginAstrologerServices(email);
+        // console.log("astrolger:", astrologer)
+        // console.log("token", token)
 
         res.cookie("accessToken", token, cookieOptionsForAcessToken);
         req.astrologer = astrologer;

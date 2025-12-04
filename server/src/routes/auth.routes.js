@@ -8,7 +8,7 @@ import {
     registerUserController,
     forgotPasswordController, 
     resetPasswordController,
-    googleLoginController // Import
+    googleLoginController 
 } from "../controllers/auth.controllers.js"
 import { authMiddleware } from "../middlewares/autMiddleware.js"
 
@@ -22,7 +22,6 @@ router.get("/currentUser", authMiddleware, getCurrentUserController)
 router.post("/forgot-password", forgotPasswordController)
 router.post("/reset-password/:resetToken", resetPasswordController)
 
-// Google Route
 router.post("/google", googleLoginController)
 
 export default router
