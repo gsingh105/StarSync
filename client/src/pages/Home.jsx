@@ -228,8 +228,8 @@ const Home = () => {
                 <span className="text-base font-sans not-italic text-gray-500 mt-2 block">Connect with certified masters of the Vedic arts for clarity on love, career, and life's great tapestry.</span>
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-                <Link to="/register" className="w-full sm:w-auto px-10 py-4 border border-amber-500/50 bg-[#1a1500] hover:bg-[#2a2200] text-amber-100 font-cinzel font-bold tracking-widest uppercase transition-all duration-300 relative overflow-hidden group">
-                    <span className="relative z-10">Read My Chart</span>
+                <Link to="/dashboard" className="w-full sm:w-auto px-10 py-4 border border-amber-500/50 bg-[#1a1500] hover:bg-[#2a2200] text-amber-100 font-cinzel font-bold tracking-widest uppercase transition-all duration-300 relative overflow-hidden group">
+                    <span className="relative z-10">Get Started</span>
                     <div className="absolute inset-0 bg-amber-500/10 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
                 </Link>
             </div>

@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-// 1. Import the NEW Astrologer Context
 import { useAstrologerAuth } from '../context/AstrologerAuthContext'; 
 import { useNavigate } from 'react-router-dom';
 import { 
   Phone, Clock, DollarSign, Star, User, LogOut, 
   Activity, PhoneIncoming, X, RefreshCw 
 } from 'lucide-react';
+// 1. IMPORT VIDEO ROOM
+import LiveVideoRoom from '../components/LiveVideoRoom';
 
 const AstrologerDashboard = () => {
-  // 2. Use Astrologer Auth Logic (No standard useAuth)
   const { astrologer, isAuthenticated, logout, loading: authLoading, checkAstrologerSession } = useAstrologerAuth(); 
   const navigate = useNavigate();
   
@@ -16,39 +16,41 @@ const AstrologerDashboard = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isOnline, setIsOnline] = useState(false);
   
-  // Call Simulation State
+  // Call State
   const [incomingCall, setIncomingCall] = useState(null);
-  const [callStatus, setCallStatus] = useState('idle');
+  const [callStatus, setCallStatus] = useState('idle'); // idle, ringing, connected
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  // 3. Protect Route
+  // 2. STATE FOR ACTIVE SESSION
+  const [activeSession, setActiveSession] = useState(null);
+
+  // Protect Route
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       navigate('/astrologer/login');
     }
   }, [authLoading, isAuthenticated, navigate]);
 
-  // 4. Manual Refresh Handler
   const handleRefreshData = async () => {
      setIsRefreshing(true);
      await checkAstrologerSession();
      setIsRefreshing(false);
   };
 
-  // 5. Clock Timer
+  // Clock
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // 6. Simulating Call Logic
+  // Simulating Incoming Call Logic (Timer based for now, replace with Socket.io later)
   useEffect(() => {
     let callTimer;
     if (isOnline && callStatus === 'idle') {
       const randomTime = Math.floor(Math.random() * 8000) + 3000;
       callTimer = setTimeout(() => {
         setIncomingCall({
-          id: 'call_123',
+          id: 'mock_user_123', // In real app, this is the actual User ID calling you
           userName: 'Rahul Gupta',
           type: 'audio', 
           duration: '5 mins',
@@ -66,7 +68,6 @@ const AstrologerDashboard = () => {
     navigate('/astrologer/login');
   };
 
-  // Safe Data Access (Default to empty object if null during transition)
   const {
     name = "Astrologer",
     email = "",
@@ -77,7 +78,24 @@ const AstrologerDashboard = () => {
     profileImage
   } = astrologer || {};
 
-  // --- LOADING STATE ---
+  // --- 3. HANDLE ANSWERING CALL ---
+  const handleAnswerCall = () => {
+    if (incomingCall && astrologer) {
+      setActiveSession({
+        userId: incomingCall.id, 
+        astrologerId: astrologer._id
+      });
+      setCallStatus('connected');
+    }
+  };
+
+  const handleEndCall = () => {
+    setCallStatus('idle');
+    setIncomingCall(null);
+    setActiveSession(null);
+  };
+
+  // Loading Screen
   if (authLoading) {
     return (
         <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center text-amber-500 gap-4">
@@ -87,7 +105,21 @@ const AstrologerDashboard = () => {
     );
   }
 
-  // --- RENDER ---
+  // --- 4. RENDER VIDEO ROOM IF CONNECTED ---
+  if (callStatus === 'connected' && activeSession) {
+     return (
+       <div className="fixed inset-0 z-[100] bg-black">
+         <LiveVideoRoom 
+            userId={activeSession.userId} 
+            astrologerId={activeSession.astrologerId} 
+            role="astrologer" 
+            onEndCall={handleEndCall} 
+         />
+       </div>
+     );
+  }
+
+  // --- STANDARD DASHBOARD RENDER ---
   return (
     <div className="min-h-screen bg-[#050505] text-gray-200 font-sans selection:bg-amber-500/30">
       <style>{`
@@ -179,8 +211,11 @@ const AstrologerDashboard = () => {
                   <h3 className="text-2xl font-bold text-white mb-1">{incomingCall.userName}</h3>
                   <p className="text-amber-500 text-sm mb-6 uppercase">Incoming {incomingCall.type} Call</p>
                   <div className="flex gap-4 justify-center">
+                    {/* REJECT BUTTON */}
                     <button onClick={() => { setIncomingCall(null); setCallStatus('idle'); }} className="w-14 h-14 rounded-full bg-red-600 flex items-center justify-center text-white"><X size={24} /></button>
-                    <button onClick={() => setCallStatus('connected')} className="w-14 h-14 rounded-full bg-green-600 flex items-center justify-center text-white animate-bounce"><PhoneIncoming size={24} /></button>
+                    
+                    {/* ACCEPT BUTTON -> Triggers Video Room */}
+                    <button onClick={handleAnswerCall} className="w-14 h-14 rounded-full bg-green-600 flex items-center justify-center text-white animate-bounce"><PhoneIncoming size={24} /></button>
                   </div>
                 </div>
               ) : null}
@@ -192,7 +227,6 @@ const AstrologerDashboard = () => {
             <h3 className="text-lg font-cinzel text-amber-500 mb-4 pb-2 border-b border-gray-800">Your Profile</h3>
             <div className="flex flex-col items-center mb-6">
               
-              {/* IMAGE FIX: Fallback Logic */}
               <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-amber-600 to-purple-600 p-1 mb-3">
                  <div className="w-full h-full rounded-full bg-[#1a1a1e] overflow-hidden flex items-center justify-center border-4 border-[#1a1a1e]">
                    {profileImage ? (
@@ -201,19 +235,13 @@ const AstrologerDashboard = () => {
                        alt="Profile" 
                        className="w-full h-full object-cover"
                        onError={(e) => {
-                         // Hide the broken image and show the fallback icon container
                          e.target.style.display = 'none';
                          e.target.parentElement.classList.add('fallback-active');
                        }}
                      />
                    ) : null}
-                   {/* Fallback Icon - Visible if no image or if image hidden via error */}
                    <User className={`text-amber-500/50 w-10 h-10 ${profileImage ? 'hidden' : 'block'} fallback-icon`} />
-                   
-                   {/* CSS to show icon when image fails */}
-                   <style>{`
-                      .fallback-active .fallback-icon { display: block !important; }
-                   `}</style>
+                   <style>{`.fallback-active .fallback-icon { display: block !important; }`}</style>
                  </div>
               </div>
 
