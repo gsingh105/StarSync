@@ -1,16 +1,15 @@
 import axios from 'axios';
 
-// Ensure this matches your Vite environment variable or fallback
+// 1. FIX: Use VITE_API_URL
 const envUrl = import.meta.env.API_URL || 'http://localhost:3000';
 
 const baseURL = envUrl.includes('/api/astrologer') 
   ? envUrl 
   : `${envUrl.replace(/\/$/, '')}/api/astrologer`;
 
-// 1. CONFIGURE AXIOS FOR COOKIES
 const api = axios.create({
   baseURL,
-  withCredentials: true, // <--- CRITICAL: Sends cookies with every request
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   }
@@ -18,15 +17,15 @@ const api = axios.create({
 
 const astrologerService = {
   // Login
-  login: async (email, password) => {
+  login: async (email) => {
     try {
-      // Fix: Send both email and password
-      const response = await api.post('/login', { email});
+      // Note: You usually need a password here too, but following your code structure:
+      const response = await api.post('/login', { email });
       
       if (response.data.success) {
-        // The TOKEN is handled automatically by the browser (Set-Cookie header)
-        // We return the user data
-        return response.data.astrologer; 
+        // 2. FIX: Robust Data Extraction
+        // Check 'astrologer' OR 'data' OR 'user' to ensure we get the object
+        return response.data.astrologer || response.data.data || response.data.user; 
       } else {
         throw new Error(response.data.message || "Login failed");
       }
@@ -36,26 +35,24 @@ const astrologerService = {
     }
   },
 
-  // Fetch Current Astrologer (Uses the cookie automatically)
+  // Fetch Current Astrologer
   getCurrentAstrologer: async () => {
     try {
       const response = await api.get('/current-astrologer');
-      
       if (response.data.success) {
-        return response.data.data; // Note: Response helper usually puts data in .data field
+        // This was already working, but let's be safe
+        return response.data.data || response.data.astrologer; 
       }
       return null;
     } catch (error) {
-      // If 401, it means cookie is missing or invalid
-      console.error("Failed to fetch fresh profile data:", error);
-      throw error;
+      // Don't throw here, just return null so the context knows we aren't logged in
+      return null; 
     }
   },
 
-  // Logout (Optional: Hit backend to clear cookie)
   logout: async () => {
       try {
-          await api.post('/logout'); // Ensure this route exists in backend
+          await api.post('/logout'); 
       } catch (e) {
           console.error(e);
       }

@@ -1,21 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+// 1. Import the NEW Astrologer Context
+import { useAstrologerAuth } from '../context/AstrologerAuthContext'; 
 import { useNavigate } from 'react-router-dom';
-import astrologerService from '../services/astrologerService';
 import { 
   Phone, Clock, DollarSign, Star, User, LogOut, 
   Activity, PhoneIncoming, X, RefreshCw 
 } from 'lucide-react';
 
 const AstrologerDashboard = () => {
-  // 1. Get Auth State
-  // authLoading is crucial here: it waits for the initial "Am I logged in?" check to finish
-  const { user, isAuthenticated, logout, loading: authLoading } = useAuth(); 
+  // 2. Use Astrologer Auth Logic (No standard useAuth)
+  const { astrologer, isAuthenticated, logout, loading: authLoading, checkAstrologerSession } = useAstrologerAuth(); 
   const navigate = useNavigate();
   
-  // 2. Local State
-  // Initialize with 'user' from context for immediate render, but we will sync fresh data
-  const [profileData, setProfileData] = useState(user || {});
+  // Local State
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isOnline, setIsOnline] = useState(false);
   
@@ -24,45 +21,19 @@ const AstrologerDashboard = () => {
   const [callStatus, setCallStatus] = useState('idle');
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  // 3. Effect: Protect Route
+  // 3. Protect Route
   useEffect(() => {
-    // Only redirect if we are done loading and definitely not authenticated
     if (!authLoading && !isAuthenticated) {
       navigate('/astrologer/login');
     }
   }, [authLoading, isAuthenticated, navigate]);
 
-  // 4. Effect: Sync Real-Time Data (Cookie-Based)
-  useEffect(() => {
-    const syncRealTimeData = async () => {
-      // Don't fetch if we aren't logged in
-      if (!isAuthenticated) return;
-      
-      setIsRefreshing(true);
-      try {
-        // We don't pass an ID. The cookie identifies us to the backend.
-        const freshData = await astrologerService.getCurrentAstrologer();
-        
-        if (freshData) {
-          setProfileData(freshData);
-          console.log("Dashboard synced via Cookie Auth:", freshData);
-        }
-      } catch (error) {
-        console.error("Dashboard sync failed:", error);
-        // If the cookie is invalid/expired (401), the service throws, 
-        // and we should log the user out on the client side.
-        if (error.response?.status === 401) {
-            handleLogout();
-        }
-      } finally {
-        setIsRefreshing(false);
-      }
-    };
-
-    if (!authLoading) {
-        syncRealTimeData();
-    }
-  }, [isAuthenticated, authLoading]); 
+  // 4. Manual Refresh Handler
+  const handleRefreshData = async () => {
+     setIsRefreshing(true);
+     await checkAstrologerSession();
+     setIsRefreshing(false);
+  };
 
   // 5. Clock Timer
   useEffect(() => {
@@ -91,11 +62,11 @@ const AstrologerDashboard = () => {
   }, [isOnline, callStatus]);
 
   const handleLogout = async () => {
-    await logout(); // Context calls service -> Service hits backend to clear cookie
+    await logout();
     navigate('/astrologer/login');
   };
 
-  // Safe Data Access
+  // Safe Data Access (Default to empty object if null during transition)
   const {
     name = "Astrologer",
     email = "",
@@ -104,14 +75,14 @@ const AstrologerDashboard = () => {
     rating = 0,
     price = 0,
     profileImage
-  } = profileData;
+  } = astrologer || {};
 
   // --- LOADING STATE ---
   if (authLoading) {
     return (
         <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center text-amber-500 gap-4">
             <RefreshCw className="animate-spin w-10 h-10" />
-            <h2 className="font-cinzel text-xl tracking-widest">Verifying Session...</h2>
+            <h2 className="font-cinzel text-xl tracking-widest">Entering Sanctum...</h2>
         </div>
     );
   }
@@ -157,7 +128,9 @@ const AstrologerDashboard = () => {
           <div>
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-cinzel text-white">Welcome, {name}</h2>
-              {isRefreshing && <RefreshCw className="w-4 h-4 text-amber-500 animate-spin" />}
+              <button onClick={handleRefreshData} disabled={isRefreshing}>
+                 <RefreshCw className={`w-4 h-4 text-amber-500 ${isRefreshing ? 'animate-spin' : 'hover:rotate-180 transition-transform'}`} />
+              </button>
             </div>
             <p className="text-gray-500 text-sm flex items-center gap-2">
               <Clock size={14} /> {currentTime.toLocaleDateString()} • {currentTime.toLocaleTimeString()}
@@ -218,13 +191,32 @@ const AstrologerDashboard = () => {
           <div className="bg-[#0f0f11] rounded-xl border border-gray-800 p-6 h-fit">
             <h3 className="text-lg font-cinzel text-amber-500 mb-4 pb-2 border-b border-gray-800">Your Profile</h3>
             <div className="flex flex-col items-center mb-6">
+              
+              {/* IMAGE FIX: Fallback Logic */}
               <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-amber-600 to-purple-600 p-1 mb-3">
-                <img 
-                  src={profileImage || "https://via.placeholder.com/150"} 
-                  alt="Profile" 
-                  className="w-full h-full rounded-full bg-[#1a1a1e] object-cover border-4 border-[#1a1a1e]" 
-                />
+                 <div className="w-full h-full rounded-full bg-[#1a1a1e] overflow-hidden flex items-center justify-center border-4 border-[#1a1a1e]">
+                   {profileImage ? (
+                     <img 
+                       src={profileImage} 
+                       alt="Profile" 
+                       className="w-full h-full object-cover"
+                       onError={(e) => {
+                         // Hide the broken image and show the fallback icon container
+                         e.target.style.display = 'none';
+                         e.target.parentElement.classList.add('fallback-active');
+                       }}
+                     />
+                   ) : null}
+                   {/* Fallback Icon - Visible if no image or if image hidden via error */}
+                   <User className={`text-amber-500/50 w-10 h-10 ${profileImage ? 'hidden' : 'block'} fallback-icon`} />
+                   
+                   {/* CSS to show icon when image fails */}
+                   <style>{`
+                      .fallback-active .fallback-icon { display: block !important; }
+                   `}</style>
+                 </div>
               </div>
+
               <h4 className="text-xl font-bold text-white text-center">{name}</h4>
               <p className="text-sm text-gray-500">{email}</p>
             </div>

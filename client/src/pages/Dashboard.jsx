@@ -172,7 +172,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-6">
              {/* 4. Display User FullName from Context */}
              <span className="hidden md:inline text-xs font-cinzel text-amber-500/60 uppercase tracking-widest">
-                Logged in as {user?.fullName || user?.name }
+                Logged in as {user?.fullName}
              </span>
              <button 
                onClick={handleLogout} 
