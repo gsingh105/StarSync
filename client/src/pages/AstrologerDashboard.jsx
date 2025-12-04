@@ -5,6 +5,8 @@ import {
   Phone, Clock, DollarSign, Star, User, LogOut, 
   Activity, PhoneIncoming, X, RefreshCw 
 } from 'lucide-react';
+// 1. IMPORT VIDEO ROOM
+import LiveVideoRoom from '../components/LiveVideoRoom';
 
 const AstrologerDashboard = () => {
   const { astrologer, isAuthenticated, logout, loading: authLoading, checkAstrologerSession } = useAstrologerAuth(); 
@@ -13,7 +15,7 @@ const AstrologerDashboard = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isOnline, setIsOnline] = useState(false);
   const [incomingCall, setIncomingCall] = useState(null);
-  const [callStatus, setCallStatus] = useState('idle');
+  const [callStatus, setCallStatus] = useState('idle'); // idle, ringing, connected
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -39,7 +41,7 @@ const AstrologerDashboard = () => {
       const randomTime = Math.floor(Math.random() * 8000) + 3000;
       callTimer = setTimeout(() => {
         setIncomingCall({
-          id: 'call_123',
+          id: 'mock_user_123', // In real app, this is the actual User ID calling you
           userName: 'Rahul Gupta',
           type: 'audio', 
           duration: '5 mins',
