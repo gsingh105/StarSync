@@ -1,40 +1,38 @@
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext'; // UPDATED
-import { ArrowLeft, LogOut, Mail, User, Calendar } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { ArrowLeft, LogOut, Mail, User, Calendar } from 'lucide-react'
 
 export default function Profile() {
-  const navigate = useNavigate();
-  // Use context hooks instead of direct service calls
-  const { user, logout } = useAuth(); 
+  const navigate = useNavigate()
+  const { user, logout } = useAuth()
 
   const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
+    await logout()
+    navigate('/login')
+  }
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return 'N/A'
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
-    });
-  };
+    })
+  }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-sm">
+    <div className="min-h-screen bg-gray-900 text-white">
+      {/* Top Navigation */}
+      <nav className="bg-gray-800/90 backdrop-blur-sm shadow-sm">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Link 
-              to="/dashboard"
-              className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5" />
-              Back
-            </Link>
-            <h1 className="text-2xl font-bold text-gray-800">Profile</h1>
-          </div>
+          <Link
+            to="/dashboard"
+            className="flex items-center gap-2 text-gray-200 hover:text-amber-400 transition-colors"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            Back
+          </Link>
+
           <button
             onClick={handleLogout}
             className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-all"
@@ -45,77 +43,80 @@ export default function Profile() {
         </div>
       </nav>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-white rounded-lg shadow-md p-8">
-            <div className="flex items-center space-x-4 mb-6">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">
-                {user?.fullName?.charAt(0).toUpperCase() || 'U'}
-              </div>
-              <div>
-                <h2 className="text-2xl font-semibold">{user?.fullName || 'User'}</h2>
-                <p className="text-gray-600">{user?.email || 'No email'}</p>
-                <span className="inline-block mt-1 px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
-                  {user?.role?.toUpperCase() || 'USER'}
-                </span>
-              </div>
+      {/* Profile Card */}
+      <div className="container mx-auto px-4 py-12 flex justify-center">
+        <div className="bg-gray-800 rounded-2xl shadow-xl w-full max-w-2xl p-8">
+          
+          {/* Profile Header */}
+          <div className="flex items-center space-x-6 mb-8">
+            <div className="w-20 h-20 bg-gradient-to-br from-amber-500 to-yellow-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-md">
+              {user?.fullName?.charAt(0).toUpperCase() || 'U'}
             </div>
 
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-semibold mb-4">Account Information</h3>
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <User className="h-5 w-5 text-gray-400 mt-0.5" />
-                  <div className="flex-1">
-                    <label className="text-sm text-gray-600">Full Name</label>
-                    <p className="text-gray-800 font-medium">{user?.fullName || 'N/A'}</p>
-                  </div>
-                </div>
+            <div>
+              <h2 className="text-3xl font-semibold text-amber-400">
+                {user?.fullName || 'User'}
+              </h2>
+              <p className="text-gray-300">{user?.email || 'No email'}</p>
 
-                <div className="flex items-start gap-3">
-                  <Mail className="h-5 w-5 text-gray-400 mt-0.5" />
-                  <div className="flex-1">
-                    <label className="text-sm text-gray-600">Email Address</label>
-                    <p className="text-gray-800 font-medium">{user?.email || 'N/A'}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <User className="h-5 w-5 text-gray-400 mt-0.5" />
-                  <div className="flex-1">
-                    <label className="text-sm text-gray-600">User ID</label>
-                    <p className="text-gray-800 font-mono text-sm">{user?._id || 'N/A'}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <User className="h-5 w-5 text-gray-400 mt-0.5" />
-                  <div className="flex-1">
-                    <label className="text-sm text-gray-600">Role</label>
-                    <p className="text-gray-800 font-medium capitalize">{user?.role || 'User'}</p>
-                  </div>
-                </div>
-
-                {user?.createdAt && (
-                  <div className="flex items-start gap-3">
-                    <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
-                    <div className="flex-1">
-                      <label className="text-sm text-gray-600">Member Since</label>
-                      <p className="text-gray-800 font-medium">{formatDate(user.createdAt)}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="border-t mt-6 pt-6">
-              <button className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 transition-all">
-                Edit Profile
-              </button>
+              <span className="inline-block mt-2 px-3 py-1 bg-amber-500/20 text-amber-400 text-xs font-semibold rounded-full">
+                {user?.role?.toUpperCase() || 'USER'}
+              </span>
             </div>
           </div>
+
+          {/* Account Info */}
+          <div className="border-t border-gray-700 pt-6">
+            <h3 className="text-xl font-semibold mb-4 text-gray-200">
+              Account Information
+            </h3>
+
+            <div className="space-y-5">
+              <div className="flex gap-3 text-gray-300">
+                <User className="h-5 w-5 text-amber-400" />
+                <div>
+                  <label className="text-sm opacity-70">Full Name</label>
+                  <p className="text-lg font-medium">{user?.fullName || 'N/A'}</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 text-gray-300">
+                <Mail className="h-5 w-5 text-amber-400" />
+                <div>
+                  <label className="text-sm opacity-70">Email Address</label>
+                  <p className="text-lg font-medium">{user?.email || 'N/A'}</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 text-gray-300">
+                <User className="h-5 w-5 text-amber-400" />
+                <div>
+                  <label className="text-sm opacity-70">User ID</label>
+                  <p className="text-gray-400 font-mono text-xs">{user?._id || 'N/A'}</p>
+                </div>
+              </div>
+
+              {user?.createdAt && (
+                <div className="flex gap-3 text-gray-300">
+                  <Calendar className="h-5 w-5 text-amber-400" />
+                  <div>
+                    <label className="text-sm opacity-70">Member Since</label>
+                    <p className="text-lg font-medium">{formatDate(user.createdAt)}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Edit Button */}
+          <div className="mt-8">
+            <button className="w-full bg-amber-500 text-gray-900 py-3 rounded-xl font-semibold hover:bg-amber-400 transition-all">
+              Edit Profile
+            </button>
+          </div>
+
         </div>
       </div>
     </div>
-  );
+  )
 }

@@ -5,24 +5,17 @@ import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useGoogleLogin } from '@react-oauth/google'; 
-
-// --- Assets ---
-const StarIcon = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-  </svg>
-);
+import { useGoogleLogin } from '@react-oauth/google';
 
 const loginSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email format'),
-  password: z.string().min(1, 'Password is required')
+  password: z.string().min(1, 'Password is required'),
 });
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login, googleLogin } = useAuth(); // Get auth functions
-  
+  const { login, googleLogin } = useAuth();
+
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');
@@ -30,147 +23,133 @@ export default function Login() {
   const {
     register,
     handleSubmit,
-    formState: { errors }
+    formState: { errors },
   } = useForm({
     resolver: zodResolver(loginSchema),
-    mode: 'onChange'
+    mode: 'onChange',
   });
 
-  // Standard Login Handler
   const onSubmit = async (data) => {
     setLoading(true);
     setApiError('');
-
     try {
-      await login(data); 
+      await login(data);
       navigate('/dashboard');
     } catch (error) {
-      console.error('Login Error:', error);
-      let errorMessage = 'Invalid credentials. Please try again.';
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      }
-      setApiError(String(errorMessage));
+      setApiError(error.response?.data?.message || 'Invalid credentials. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Google Login Hook
   const handleGoogleAuth = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
         setLoading(true);
-        // Send access token to backend to verify and log in
         await googleLogin(tokenResponse.access_token);
         navigate('/dashboard');
-      } catch (error) {
-        console.error("Google Error:", error);
-        setApiError("Google Sign-in failed. Please try again.");
+      } catch {
+        setApiError('Google Sign-in failed. Please try again.');
       } finally {
         setLoading(false);
       }
     },
-    onError: () => setApiError("Google Sign-in failed"),
+    onError: () => setApiError('Google Sign-in failed'),
   });
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#050505] text-[#e0e0e0] font-sans relative overflow-hidden selection:bg-amber-900 selection:text-amber-100 p-4">
-      
-      {/* Styles */}
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap');
-        .font-cinzel { font-family: 'Cinzel', serif; }
-        .font-playfair { font-family: 'Playfair Display', serif; }
-        input:-webkit-autofill,
-        input:-webkit-autofill:hover, 
-        input:-webkit-autofill:focus, 
-        input:-webkit-autofill:active{
-            -webkit-box-shadow: 0 0 0 30px #121212 inset !important;
-            -webkit-text-fill-color: #e0e0e0 !important;
-            transition: background-color 5000s ease-in-out 0s;
-        }
-      `}</style>
-
-      {/* Background */}
-      <div className="fixed inset-0 pointer-events-none z-[0] opacity-[0.05]" style={{ backgroundImage: `url("https://www.transparenttextures.com/patterns/stardust.png")` }}></div>
-      <div className="fixed top-[-10%] left-[-10%] w-[40rem] h-[40rem] bg-amber-600/10 rounded-full blur-[100px] pointer-events-none"></div>
-      <div className="fixed bottom-[-10%] right-[-10%] w-[40rem] h-[40rem] bg-indigo-900/20 rounded-full blur-[100px] pointer-events-none"></div>
-
-      <div className="w-full max-w-md relative z-10">
-        <div className="h-1 w-full bg-gradient-to-r from-transparent via-amber-500 to-transparent mb-1 opacity-50"></div>
-
-        <div className="bg-[#0a0a0c]/90 backdrop-blur-xl border border-amber-500/20 rounded-sm shadow-[0_0_40px_rgba(0,0,0,0.6)] p-8">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md">
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-lg p-8 md:p-10">
           
+          {/* Header */}
           <div className="text-center mb-8">
-            <Link to="/" className="inline-block mb-4 group">
-                 <StarIcon className="w-8 h-8 text-amber-500 mx-auto group-hover:rotate-180 transition-transform duration-700" />
-            </Link>
-            <h1 className="text-3xl font-cinzel font-bold text-amber-100 mb-2">Welcome Back</h1>
-            <p className="font-playfair italic text-gray-400 text-sm">Enter the sanctum to continue your journey</p>
+            <h1 className="text-3xl font-bold text-gray-900 mt-4">Welcome Back</h1>
+            <p className="text-gray-600 mt-2">Login to access your dashboard</p>
           </div>
 
+          {/* API Error */}
+          {apiError && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-300 rounded-xl flex items-center gap-3 text-red-600 text-sm">
+              <AlertCircle size={18} />
+              <span>{apiError}</span>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            {/* Inputs */}
+            
+            {/* Email */}
             <div>
-              <label className="block text-xs font-cinzel font-semibold tracking-widest text-amber-500/80 mb-2 uppercase">Email Address</label>
-              <div className="relative group">
-                <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-500 group-hover:text-amber-400 transition-colors" />
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
                   type="email"
-                  placeholder="seeker@starsync.com"
+                  placeholder="you@example.com"
                   {...register('email')}
-                  className={`w-full bg-[#121212] pl-10 pr-4 py-2.5 border rounded-sm font-playfair focus:outline-none focus:ring-1 transition-all text-amber-50 placeholder-gray-700 ${errors.email ? 'border-red-500/50' : 'border-amber-500/20'}`}
+                  className={`w-full pl-12 pr-4 py-3.5 bg-white border rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                    errors.email ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 />
               </div>
-              {errors.email && <p className="mt-1 text-xs text-red-400">{errors.email.message}</p>}
+              {errors.email && <p className="mt-1.5 text-xs text-red-500">{errors.email.message}</p>}
             </div>
 
+            {/* Password */}
             <div>
-              <label className="block text-xs font-cinzel font-semibold tracking-widest text-amber-500/80 mb-2 uppercase">Password</label>
-              <div className="relative group">
-                <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-500 group-hover:text-amber-400 transition-colors" />
+              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
+                  placeholder="Enter your password"
                   {...register('password')}
-                  className={`w-full bg-[#121212] pl-10 pr-12 py-2.5 border rounded-sm font-playfair focus:outline-none focus:ring-1 transition-all text-amber-50 placeholder-gray-700 ${errors.password ? 'border-red-500/50' : 'border-amber-500/20'}`}
+                  className={`w-full pl-12 pr-14 py-3.5 bg-white border rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                    errors.password ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-gray-500 hover:text-amber-400">
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
-              {errors.password && <p className="mt-1 text-xs text-red-400">{errors.password.message}</p>}
+              {errors.password && <p className="mt-1.5 text-xs text-red-500">{errors.password.message}</p>}
             </div>
 
-            {/* Actions */}
+            {/* Forgot Password */}
             <div className="text-right">
-              <Link to="/forgot-password" className="text-xs font-cinzel tracking-wider text-amber-500/80 hover:text-amber-400 hover:underline transition-colors uppercase">Forgot password?</Link>
+              <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700 font-medium transition">
+                Forgot password?
+              </Link>
             </div>
 
-            {apiError && (
-              <div className="p-3 bg-red-900/10 border border-red-900/30 rounded-sm">
-                <p className="text-sm font-serif text-red-400 flex items-center gap-2"><AlertCircle className="h-4 w-4" />{apiError}</p>
-              </div>
-            )}
-
-            <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-amber-700 to-amber-900 hover:from-amber-600 hover:to-amber-800 text-amber-100 py-3 rounded-sm font-cinzel font-bold tracking-widest border border-amber-500/20 transition-all shadow-lg hover:shadow-amber-900/20">
-              {loading ? 'Consulting...' : 'Enter Sanctum'}
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-all shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Signing In...' : 'Sign In'}
             </button>
 
             {/* Divider */}
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-800"></div></div>
-              <div className="relative flex justify-center text-xs font-cinzel tracking-widest">
-                <span className="px-4 bg-[#0a0a0c] text-gray-500 uppercase">Or continue with</span>
+            <div className="relative my-8">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="px-4 bg-gray-50 text-gray-500">OR</span>
               </div>
             </div>
 
-            {/* Google Button */}
+            {/* Google */}
             <button
-              type="button" // Important
-              onClick={() => handleGoogleAuth()} 
-              className="w-full flex items-center justify-center gap-3 py-2.5 px-4 border border-gray-700 hover:border-amber-500/50 rounded-sm font-playfair text-gray-300 bg-[#15151a] hover:bg-[#1a1a20] transition-all"
+              type="button"
+              onClick={() => handleGoogleAuth()}
+              className="w-full flex items-center justify-center gap-3 py-3.5 border border-gray-300 rounded-xl text-gray-700 font-medium transition hover:bg-gray-100"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -180,14 +159,17 @@ export default function Login() {
               </svg>
               Continue with Google
             </button>
-
-            <div className="text-center text-sm pt-2 font-serif">
-              <span className="text-gray-500">Don't have an account? </span>
-              <Link to="/register" className="text-amber-500 hover:text-amber-300 font-semibold hover:underline">Sign Up</Link>
-            </div>
           </form>
+
+          {/* Signup */}
+          <p className="text-center mt-8 text-gray-700 text-sm">
+            Don’t have an account?{' '}
+            <Link to="/register" className="text-blue-600 hover:text-blue-700 font-semibold">
+              Sign up
+            </Link>
+          </p>
+
         </div>
-        <div className="h-px w-full bg-gradient-to-r from-transparent via-amber-500 to-transparent mt-1 opacity-50"></div>
       </div>
     </div>
   );

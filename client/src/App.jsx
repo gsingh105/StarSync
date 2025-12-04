@@ -15,6 +15,7 @@ import ResetPassword from './pages/ResetPassword';
 // Astrologer Components
 import AstrologerLogin from './pages/AstrologerLogin';
 import AstrologerDashboard from './pages/AstrologerDashboard';
+import NotFound from './pages/NotFound';
 
 // Layout to wrap Astrologer routes with their specific Context
 const AstrologerLayout = () => {
@@ -34,7 +35,8 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          
+          <Route path='*' element={<NotFound />} />
+
           {/* --- PASSWORD RECOVERY --- */}
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
@@ -46,7 +48,6 @@ function App() {
             <Route path="/astrologer/dashboard" element={<AstrologerDashboard />} />
           </Route>
 
-          {/* --- PROTECTED USER ROUTES --- */}
           <Route
             path="/dashboard"
             element={
