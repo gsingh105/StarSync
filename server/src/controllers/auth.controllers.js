@@ -124,13 +124,12 @@ export const resetPasswordController = async (req, res, next) => {
     }
 }
 
-// --- NEW: Google Controller ---
 export const googleLoginController = async (req, res, next) => {
     try {
         const { accessToken } = req.body
 
         if (!accessToken) {
-             return errorResponse(res, "Google Access Token is required", 400)
+            return errorResponse(res, "Google Access Token is required", 400)
         }
 
         const { user, token, refreshToken } = await googleLoginService(accessToken)
