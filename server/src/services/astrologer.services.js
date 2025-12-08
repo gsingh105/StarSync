@@ -4,6 +4,7 @@ import AstrologerModel from '../models/astrologer.model.js';
 import { signToken } from "../utils/token.js";
 
 export const addAstrologerService = async (astroData) => {
+    console.log(astroData)
     const existingAstrologer = await findAstrologerByEmail(astroData.email);
     if (existingAstrologer) {
         throw new ConflictError("Astrologer with this email already exists");

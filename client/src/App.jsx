@@ -37,7 +37,6 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path='*' element={<NotFound />} />
 
-          {/* --- PASSWORD RECOVERY --- */}
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
 
