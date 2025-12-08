@@ -9,7 +9,9 @@ export const addAstrologerController = async (req, res, next) => {
             ...req.body,
             createdBy: req.user ? req.user._id : null
         };
+        // console.log(astroData)
         const result = await addAstrologerService(astroData);
+        // console.log(result)
         return successResponse(res, "Astrologer added successfully", result, 201);
     } catch (error) {
         next(error);
@@ -36,13 +38,6 @@ export const loginAstrologerController = async (req, res, next) => {
 
         res.cookie("accessToken", token, cookieOptionsForAcessToken);
         req.astrologer = astrologer;
-
-        // res.status(200).json({
-        //     success: true,
-        //     message: "Astrologer logged in successfully",
-        //     token,
-        //     astrologer
-        // });
         return successResponse(res,"Astrologer logged in successfully",astrologer,200)
 
     } catch (error) {

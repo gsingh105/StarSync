@@ -8,8 +8,14 @@ export const createToken = (identity, room) => {
     process.env.LIVEKIT_API_SECRET,
     { identity }
   );
-  const grant = new VideoGrant({ room });
-  at.addGrant(grant);
+  
+  // VideoGrant is now part of the AccessToken's video property
+  at.addGrant({
+    roomJoin: true,
+    room: room,
+    canPublish: true,
+    canSubscribe: true,
+  });
 
   return at.toJwt();
 };
