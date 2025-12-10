@@ -9,7 +9,6 @@ export const createToken = (identity, room) => {
     { identity }
   );
   
-  // VideoGrant is now part of the AccessToken's video property
   at.addGrant({
     roomJoin: true,
     room: room,
@@ -17,5 +16,6 @@ export const createToken = (identity, room) => {
     canSubscribe: true,
   });
 
-  return at.toJwt();
+  const jwt = at.toJwt();
+  return jwt; // Returns a STRING
 };
