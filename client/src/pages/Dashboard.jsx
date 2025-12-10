@@ -1,23 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, LogOut, TrendingUp, PieChart as PieIcon, MessageCircle, Star, Phone } from 'lucide-react';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell
-} from 'recharts';
-
+import { Search, Filter, LogOut, Phone, Star } from 'lucide-react';
 import astrologerService from '../services/astrologerService';
 import { useAuth } from '../context/AuthContext';
-import socketService from '../services/socketService'; // Import Socket
-import LiveVideoRoom from '../components/LiveVideoRoom'; // Import Room
+import socketService from '../services/socketService';
+import LiveVideoRoom from '../components/LiveVideoRoom';
 
 const StarIcon = ({ className = "w-6 h-6" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
     <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
   </svg>
 );
-
-const COLORS = ['#f59e0b', '#f97316', '#ea580c', '#dc2626', '#92400e', '#7c2d12'];
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -30,39 +23,79 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [specializationFilter, setSpecializationFilter] = useState('All');
 
-  // --- CALL LOGIC ---
-  const [callStatus, setCallStatus] = useState('idle'); // idle, calling, incall
+  // Call State
+  const [callStatus, setCallStatus] = useState('idle'); 
   const [liveToken, setLiveToken] = useState(null);
   const [targetAstrologer, setTargetAstrologer] = useState(null);
 
   useEffect(() => {
-    if (user?._id) {
-        socketService.connect(user._id);
+    if (!user?._id) return;
 
-        socketService.on('call_accepted', (data) => {
-            setLiveToken(data.token);
-            setCallStatus('incall');
-        });
+    // 1. Connect
+    socketService.connect(user._id);
 
-        socketService.on('call_rejected', () => {
-            setCallStatus('idle');
-            alert("Astrologer is busy.");
-        });
+    // 2. Define Listeners
+    const onCallAccepted = (data) => {
+        setLiveToken(data.token);
+        setCallStatus('incall');
+    };
 
-        socketService.on('call_failed', () => {
-            setCallStatus('idle');
-            alert("Call failed to connect.");
-        });
-    }
-    return () => socketService.disconnect();
+    const onCallRejected = () => {
+        setCallStatus('idle');
+        alert("Call rejected or user busy.");
+    };
+
+    const onCallFailed = (data) => {
+        setCallStatus('idle');
+        alert(data.message || "Call failed.");
+    };
+
+    // --- CRITICAL FIX: SEND NAMES BACK ---
+    const onIncomingCall = (data) => {
+         // data = { callerId, callerName, roomId }
+         const accept = window.confirm(`Incoming call from ${data.callerName}. Accept?`);
+         
+         if(accept) {
+            socketService.emit('accept_call', {
+                callerId: data.callerId,
+                // Pass the Caller Name back to server
+                callerName: data.callerName, 
+                
+                receiverId: user._id,
+                // Pass My Name (Astrologer) to server
+                receiverName: user.fullName || user.name || "Astrologer", 
+                
+                roomId: data.roomId
+            });
+         } else {
+            socketService.emit('reject_call', { callerId: data.callerId });
+         }
+    };
+
+    // 3. Attach Listeners
+    socketService.on('call_accepted', onCallAccepted);
+    socketService.on('call_rejected', onCallRejected);
+    socketService.on('call_failed', onCallFailed);
+    socketService.on('incoming_call', onIncomingCall);
+
+    // 4. Cleanup
+    return () => {
+        socketService.off('call_accepted');
+        socketService.off('call_rejected');
+        socketService.off('call_failed');
+        socketService.off('incoming_call');
+        socketService.disconnect();
+    };
   }, [user]);
 
   const initiateCall = (astro) => {
       setTargetAstrologer(astro);
       setCallStatus('calling');
+      
+      // Ensure we send OUR name when starting the call
       socketService.emit('call_request', {
           callerId: user._id,
-          callerName: user.fullName,
+          callerName: user.fullName || user.name || "User", 
           receiverId: astro._id
       });
   };
@@ -70,10 +103,10 @@ export default function Dashboard() {
   const handleEndCall = () => {
       setCallStatus('idle');
       setLiveToken(null);
-      // No reload
+      window.location.reload(); 
   };
 
-  // --- EXISTING DATA FETCHING ---
+  // --- Data Fetching ---
   useEffect(() => {
     const fetchAstrologers = async () => {
       try {
@@ -111,30 +144,9 @@ export default function Dashboard() {
     setFilteredAstrologers(result);
   }, [searchTerm, specializationFilter, astrologers]);
 
-  const { pieData, barData } = useMemo(() => {
-    if (!astrologers.length) return { pieData: [], barData: [] };
-    const specCount = {};
-    const ratingSum = {}, ratingCount = {};
-
-    astrologers.forEach(a => {
-      const spec = a.specialization || "General";
-      specCount[spec] = (specCount[spec] || 0) + 1;
-      ratingSum[spec] = (ratingSum[spec] || 0) + (Number(a.rating) || 0);
-      ratingCount[spec] = (ratingCount[spec] || 0) + 1;
-    });
-
-    const pie = Object.keys(specCount).map(k => ({ name: k, value: specCount[k] }));
-    const bar = Object.keys(ratingSum).map(k => ({
-      name: k,
-      rating: Number((ratingSum[k] / ratingCount[k]).toFixed(1))
-    }));
-
-    return { pieData: pie, barData: bar };
-  }, [astrologers]);
-
   const specializations = ['All', ...new Set(astrologers.map(a => a.specialization).filter(Boolean))];
 
-  // RENDER VIDEO ROOM
+  // RENDER ROOM
   if (callStatus === 'incall' && liveToken) {
       return <LiveVideoRoom token={liveToken} onEndCall={handleEndCall} />;
   }
@@ -142,7 +154,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-50 text-gray-900">
       
-      {/* CALL MODAL */}
+      {/* Call Modal */}
       {callStatus === 'calling' && (
           <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center backdrop-blur-sm">
               <div className="bg-white p-8 rounded-2xl text-center animate-pulse">
@@ -154,7 +166,7 @@ export default function Dashboard() {
           </div>
       )}
 
-      {/* ORIGINAL UI STRUCTURE */}
+      {/* Navbar */}
       <nav className="relative z-50 border-b border-amber-200 bg-white backdrop-blur-xl shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -173,6 +185,7 @@ export default function Dashboard() {
         </div>
       </nav>
 
+      {/* Main Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-12">
         <div className="text-center mb-16">
           <h2 className="text-5xl md:text-6xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700 mb-4">
@@ -183,8 +196,7 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* Keeping your Charts logic hidden or displayed as per your original file, simplified here for brevity but logic remains above */}
-
+        {/* Search & Filter */}
         <div className="mb-12 flex flex-col md:flex-row gap-6">
           <div className="relative flex-1">
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-amber-600" />
@@ -210,7 +222,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* LIST */}
+        {/* Astrologer List */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {filteredAstrologers.map((astro) => (
               <div key={astro._id} className="group relative bg-white border border-amber-200 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-4">
@@ -238,7 +250,6 @@ export default function Dashboard() {
                     <div className="flex-1 text-center py-3 bg-amber-50 border border-amber-300 rounded-xl text-amber-800 font-bold">
                       ₹{astro.price || 99}/min
                     </div>
-                    {/* UPDATED BUTTON */}
                     <button 
                         onClick={() => initiateCall(astro)}
                         className="flex-1 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
@@ -250,7 +261,7 @@ export default function Dashboard() {
                 </div>
               </div>
             ))}
-          </div>
+        </div>
       </div>
     </div>
   );

@@ -2,13 +2,23 @@ import { AccessToken } from "livekit-server-sdk";
 import dotenv from "dotenv";
 dotenv.config();
 
-export const createToken = (identity, room) => {
+export const createToken = async (identity, room, name) => {
+  // Fallback: If name is undefined, use identity or "User"
+  const displayName = name || identity || "User";
+  console.log(`Generating Token for: ${identity} | Name: ${displayName}`);
+
   const at = new AccessToken(
     process.env.LIVEKIT_API_KEY,
     process.env.LIVEKIT_API_SECRET,
-    { identity }
+    { 
+      identity,
+      name: displayName // <--- LiveKit Video UI uses this
+    }
   );
   
+  // Method 2: Force set property (for older SDK versions)
+  at.name = displayName; 
+
   at.addGrant({
     roomJoin: true,
     room: room,
@@ -16,6 +26,5 @@ export const createToken = (identity, room) => {
     canSubscribe: true,
   });
 
-  const jwt = at.toJwt();
-  return jwt; // Returns a STRING
+  return await at.toJwt(); 
 };
