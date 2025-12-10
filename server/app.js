@@ -14,12 +14,18 @@ import sessionRoutes from "./src/routes/session.routes.js"
 import { createToken } from "./src/config/livekit.js" 
 
 const app = express()
-const httpServer = createServer(app); // Wrap Express
+const httpServer = createServer(app); 
 
 const PORT = process.env.PORT || 3000
 
+// Allowed Origins
+const allowedOrigins = [
+    "http://localhost:5173", 
+    "http://localhost:3000"
+];
+
 const corsOptions = {
-    origin: 'http://localhost:5173',
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -33,26 +39,29 @@ app.use(cookieParser())
 // --- SOCKET.IO SETUP ---
 const io = new Server(httpServer, {
     cors: {
-        origin: "http://localhost:5173",
+        origin: allowedOrigins,
         methods: ["GET", "POST"],
         credentials: true
     }
 });
 
-const onlineUsers = new Map(); // Map<userId, socketId>
+const onlineUsers = new Map();
 
 io.on("connection", (socket) => {
-    console.log(`Socket Connected: ${socket.id}`);
-
     // 1. Register
     socket.on("register", (userId) => {
-        if(userId) onlineUsers.set(userId, socket.id);
+        if(userId) {
+            onlineUsers.set(userId, socket.id);
+            // console.log(`User registered: ${userId}`);
+        }
     });
 
     // 2. Call Request
     socket.on("call_request", (data) => {
         const { callerId, callerName, receiverId } = data;
         const receiverSocketId = onlineUsers.get(receiverId);
+
+        console.log(`Call Request: ${callerId} (${callerName}) -> ${receiverId}`);
 
         if (receiverSocketId) {
             io.to(receiverSocketId).emit("incoming_call", {
@@ -65,21 +74,23 @@ io.on("connection", (socket) => {
         }
     });
 
-    // 3. Accept Call
-    socket.on("accept_call", (data) => {
-        const { callerId, receiverId, roomId } = data;
+    // 3. Accept Call (FIXED)
+    socket.on("accept_call", async (data) => {
+        const { callerId, receiverId, roomId, callerName, receiverName } = data;
+        
+        console.log(`Accepting Call. Room: ${roomId}`);
+        console.log(`Caller: ${callerName} | Receiver: ${receiverName}`);
+
         const callerSocketId = onlineUsers.get(callerId);
         const receiverSocketId = onlineUsers.get(receiverId);
 
         if (callerSocketId && receiverSocketId) {
             try {
-                // Generate Tokens (Synchronous)
-                const tokenCaller = createToken(callerId, roomId);
-                const tokenReceiver = createToken(receiverId, roomId);
+                // Pass names to Token Generator
+                const tokenCaller = await createToken(callerId, roomId, callerName);
+                const tokenReceiver = await createToken(receiverId, roomId, receiverName);
 
-                // Send to User
                 io.to(callerSocketId).emit("call_accepted", { roomId, token: tokenCaller });
-                // Send to Astrologer
                 io.to(receiverSocketId).emit("call_accepted", { roomId, token: tokenReceiver });
 
             } catch (err) {

@@ -1,8 +1,11 @@
 import { createToken } from "../config/livekit.js";
 import { createSessionRecord, getSessionByIds } from "../dao/sessionDao.js";
 
-export const createLiveSession = ({ userId, astrologerId, role }) => {
-  let session = getSessionByIds(userId, astrologerId);
+// 1. Add 'async'
+export const createLiveSession = async ({ userId, astrologerId, role }) => {
+  
+  // 2. Add 'await'
+  let session = await getSessionByIds(userId, astrologerId);
 
   if (!session) {
     session = {
@@ -13,12 +16,18 @@ export const createLiveSession = ({ userId, astrologerId, role }) => {
       status: "active",
       createdAt: new Date()
     };
-
-    createSessionRecord(session);
+    
+    // 3. Add 'await'
+    await createSessionRecord(session);
   }
 
   const identity = `${role}:${role === "user" ? userId : astrologerId}`;
-  const token = createToken(identity, session.room);
+  
+  // 4. Pass a default name since we don't have the real name in this flow
+  const defaultName = role === "user" ? "User" : "Astrologer";
+  
+  // 5. Add 'await' and pass the name argument
+  const token = await createToken(identity, session.room, defaultName);
 
   return { token, room: session.room };
 };

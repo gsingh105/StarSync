@@ -1,6 +1,5 @@
 import { io } from 'socket.io-client';
 
-// Use your backend URL
 const SOCKET_URL = import.meta.env.API_URL || 'http://localhost:3000';
 
 class SocketService {

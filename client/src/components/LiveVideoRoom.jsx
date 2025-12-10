@@ -1,20 +1,24 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   LiveKitRoom,
   VideoConference,
   RoomAudioRenderer,
 } from '@livekit/components-react';
 import '@livekit/components-styles/index.css'; 
-import { Loader2, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 
 const LIVEKIT_URL = import.meta.env.VITE_LIVEKIT_URL;
 
 export default function LiveVideoRoom({ token, onEndCall }) {
   
-  // 1. Sanitize Token (Handle case where backend sends object)
-  const validToken = (typeof token === 'object' && token?.token) ? token.token : token;
+  // 1. Sanitize & Memoize Token (Prevents "Already Connected" Loop)
+  const validToken = useMemo(() => {
+    return (typeof token === 'object' && token?.token) ? token.token : token;
+  }, [token]);
+
   const isTokenString = typeof validToken === 'string' && validToken.length > 0;
 
+  // 2. Error UI
   if (!isTokenString) {
       return (
           <div className="h-screen bg-black flex flex-col items-center justify-center text-white gap-4">
@@ -35,6 +39,14 @@ export default function LiveVideoRoom({ token, onEndCall }) {
       )
   }
 
+  // 3. Handle LiveKit Errors (e.g. Camera locked)
+  const handleError = (error) => {
+    console.error("LiveKit Error:", error);
+    if (error.message?.includes("Device in use") || error.name === "NotReadableError") {
+        alert("Camera is in use by another app/tab. Please close it and retry.");
+    }
+  };
+
   return (
     <LiveKitRoom
       video={true}
@@ -44,6 +56,9 @@ export default function LiveVideoRoom({ token, onEndCall }) {
       data-lk-theme="default"
       style={{ height: '100vh', backgroundColor: '#050505' }}
       onDisconnected={onEndCall}
+      onError={handleError}
+      // autoSubscribe prevents some connection race conditions
+      connectOptions={{ autoSubscribe: true }}
     >
       <VideoConference />
       <RoomAudioRenderer />
