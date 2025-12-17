@@ -30,11 +30,12 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!user?._id) return;
+    console.log("Logged in user:", user);
 
-    // 1. Connect
+    // 1. Connect to Socket
     socketService.connect(user._id);
 
-    // 2. Define Listeners
+    // 2. Define Socket Listeners
     const onCallAccepted = (data) => {
         setLiveToken(data.token);
         setCallStatus('incall');
@@ -50,26 +51,27 @@ export default function Dashboard() {
         alert(data.message || "Call failed.");
     };
 
-    // --- CRITICAL FIX: SEND NAMES BACK ---
+    // --- FIXED INCOMING CALL FUNCTION ---
     const onIncomingCall = (data) => {
-         // data = { callerId, callerName, roomId }
-         const accept = window.confirm(`Incoming call from ${data.callerName}. Accept?`);
-         
-         if(accept) {
-            socketService.emit('accept_call', {
-                callerId: data.callerId,
-                // Pass the Caller Name back to server
-                callerName: data.callerName, 
-                
-                receiverId: user._id,
-                // Pass My Name (Astrologer) to server
-                receiverName: user.fullName || user.name || "Astrologer", 
-                
-                roomId: data.roomId
-            });
-         } else {
-            socketService.emit('reject_call', { callerId: data.callerId });
-         }
+        console.log("Incoming Call Data Received:", data);
+
+        const accept = window.confirm(`Incoming call from ${data.callerName}. Accept?`);
+        
+        if(accept) {
+           socketService.emit('accept_call', {
+               callerId: data.callerId,
+               // IMPORTANT: Send back the name of the person calling you
+               callerName: data.callerName, 
+               
+               receiverId: user._id,
+               // Send YOUR name as the receiver
+               receiverName: user.fullName || user.name || "Astrologer", 
+               
+               roomId: data.roomId
+           });
+        } else {
+           socketService.emit('reject_call', { callerId: data.callerId });
+        }
     };
 
     // 3. Attach Listeners
@@ -78,7 +80,7 @@ export default function Dashboard() {
     socketService.on('call_failed', onCallFailed);
     socketService.on('incoming_call', onIncomingCall);
 
-    // 4. Cleanup
+    // 4. Cleanup on Unmount
     return () => {
         socketService.off('call_accepted');
         socketService.off('call_rejected');

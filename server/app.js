@@ -12,6 +12,7 @@ import userRoutes from "./src/routes/auth.routes.js"
 import astrologerRoutes from "./src/routes/astrologer.routes.js"
 import sessionRoutes from "./src/routes/session.routes.js"
 import { createToken } from "./src/config/livekit.js" 
+import { findUserById } from "./src/dao/auth.dao.js"
 
 const app = express()
 const httpServer = createServer(app); 
@@ -48,7 +49,6 @@ const io = new Server(httpServer, {
 const onlineUsers = new Map();
 
 io.on("connection", (socket) => {
-    // 1. Register
     socket.on("register", (userId) => {
         if(userId) {
             onlineUsers.set(userId, socket.id);
@@ -61,7 +61,7 @@ io.on("connection", (socket) => {
         const { callerId, callerName, receiverId } = data;
         const receiverSocketId = onlineUsers.get(receiverId);
 
-        console.log(`Call Request: ${callerId} (${callerName}) -> ${receiverId}`);
+        // console.log(`Call Request: ${callerId} (${callerName}) -> ${receiverId}`);
 
         if (receiverSocketId) {
             io.to(receiverSocketId).emit("incoming_call", {
@@ -74,20 +74,17 @@ io.on("connection", (socket) => {
         }
     });
 
-    // 3. Accept Call (FIXED)
     socket.on("accept_call", async (data) => {
         const { callerId, receiverId, roomId, callerName, receiverName } = data;
-        
-        console.log(`Accepting Call. Room: ${roomId}`);
-        console.log(`Caller: ${callerName} | Receiver: ${receiverName}`);
+        const user = await findUserById(callerId);
+        const receiver = await findUserById(receiverId)
 
         const callerSocketId = onlineUsers.get(callerId);
         const receiverSocketId = onlineUsers.get(receiverId);
 
         if (callerSocketId && receiverSocketId) {
             try {
-                // Pass names to Token Generator
-                const tokenCaller = await createToken(callerId, roomId, callerName);
+                const tokenCaller = await createToken(callerId, roomId, user.fullName);
                 const tokenReceiver = await createToken(receiverId, roomId, receiverName);
 
                 io.to(callerSocketId).emit("call_accepted", { roomId, token: tokenCaller });
