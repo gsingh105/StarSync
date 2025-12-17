@@ -1,20 +1,25 @@
-// components/Navbar.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, Menu, X as XIcon } from "lucide-react";
 
 const Navbar = () => {
   const { user, loading, logout } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
-  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
   const navigate = useNavigate();
 
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
     localStorage.setItem("theme", theme);
   }, [theme]);
 
+  // Close dropdowns on click outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (!e.target.closest('.user-menu')) setShowDropdown(false);
@@ -38,40 +43,48 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-black dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 z-50">
-      <div className="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between text-white">
+    <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-200 dark:border-slate-800">
+      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
 
         {/* Logo */}
-        <Link to="/" className="text-2xl font-semibold tracking-wide text-white">
-          StarSync
+        <Link to="/" className="flex items-center gap-2 group">
+          <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-amber-300">
+            StarSync
+          </span>
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center gap-10 text-sm text-white ">
-          <a href="#horoscopes" className=" transition">Horoscopes</a>
-          <a href="#kundli" className="hover:text-gray-900 dark:hover:text-white transition">Kundli Reading</a>
-          <a href="#compatibility" className="hover:text-gray-900 dark:hover:text-white transition">Love Compatibility</a>
+        <div className="hidden lg:flex items-center gap-8 text-sm font-medium text-gray-600 dark:text-gray-300">
+          {['Horoscopes', 'Kundli', 'Compatibility'].map((item) => (
+             <a key={item} href={`#${item.toLowerCase()}`} className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">
+               {item}
+             </a>
+          ))}
         </div>
 
-        <div className="flex items-center gap-6">
-
-        
-         
+        {/* Right Section */}
+        <div className="flex items-center gap-4">
+          
+          {/* Theme Toggle */}
+          <button 
+            onClick={toggleTheme} 
+            className="p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-slate-800 transition-colors"
+          >
+            {theme === "light" ? <Moon size={20}/> : <Sun size={20}/>}
+          </button>
 
           {loading ? (
-            <div className="w-9 h-9 rounded-full bg-gray-300 dark:bg-gray-600 animate-pulse"></div>
+            <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-slate-700 animate-pulse"></div>
           ) : user ? (
             <div className="relative user-menu">
-
-              {/* User Button */}
               <button
                 onClick={() => setShowDropdown(!showDropdown)}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition"
+                className="flex items-center gap-3 pl-2 pr-1 py-1 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition border border-transparent hover:border-gray-200 dark:hover:border-slate-700"
               >
-                <span className="hidden xl:block text-sm">
-                  {user.name || user.fullName}
+                <span className="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-200">
+                  {user.name || user.fullName?.split(' ')[0]}
                 </span>
-                <div className="w-9 h-9 rounded-full bg-gray-700 text-white dark:bg-gray-500 flex items-center justify-center text-sm font-medium">
+                <div className="w-9 h-9 rounded-full bg-amber-500 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-amber-500/20">
                   {user.profileImage ? (
                     <img src={user.profileImage} className="w-full h-full rounded-full object-cover" alt="profile" />
                   ) : (
@@ -80,78 +93,75 @@ const Navbar = () => {
                 </div>
               </button>
 
-              {/* Dropdown */}
+              {/* User Dropdown */}
               {showDropdown && (
-                <div className="absolute right-0 mt-3 w-64 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-                  <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">Signed in as</p>
-                    <p className="text-sm font-medium truncate text-gray-900 dark:text-gray-100">{user.email}</p>
-
+                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-900 rounded-xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 overflow-hidden transform origin-top-right transition-all">
+                  <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/50">
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Signed in as</p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white truncate mt-1">{user.email}</p>
                     {user.role === "astrologer" && (
-                      <span className="inline-block mt-2 px-3 py-1 text-xs border border-purple-500 text-purple-500 rounded-full">
-                        Astrologer
-                      </span>
+                       <span className="inline-block mt-2 px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300 rounded-full">
+                         Astrologer
+                       </span>
                     )}
                   </div>
 
                   <div className="py-2">
-                    <Link
-                      to={user.role === "astrologer" ? "/astrologer/dashboard" : "/dashboard"}
-                      className="block px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-                    >
-                      My Dashboard
-                    </Link>
-                    <Link to="/profile" className="block px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                      Profile & Settings
-                    </Link>
-                    <Link to="/my-readings" className="block px-5 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                      My Readings
-                    </Link>
+                    {[
+                      { name: 'Dashboard', link: user.role === "astrologer" ? "/astrologer/dashboard" : "/dashboard" },
+                      { name: 'Profile & Settings', link: "/profile" },
+                      { name: 'My Readings', link: "/my-readings" }
+                    ].map((item) => (
+                      <Link 
+                        key={item.name}
+                        to={item.link} 
+                        className="block px-6 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+                      >
+                        {item.name}
+                      </Link>
+                    ))}
                   </div>
 
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left px-5 py-3 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-                  >
-                    Sign Out
-                  </button>
+                  <div className="border-t border-gray-100 dark:border-slate-800 p-2">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
           ) : (
-            /* Guest Section */
-            <div className="flex items-center gap-5 text-sm">
-
-              {/* Normal Login */}
-              <Link to="/login" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition">
-                User Login
+            <div className="hidden md:flex items-center gap-4">
+              <Link to="/login" className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition">
+                Log in
               </Link>
-
-              {/* ⭐ Astrologer Login Added Here */}
-              <Link
-                to="/astrologer/login"
-                className="text-purple-600 dark:text-purple-400 font-medium hover:text-purple-800 dark:hover:text-purple-300 transition"
-              >
-                Astrologer Login
-              </Link>
-
-              {/* CTA Button */}
               <Link
                 to="/register"
-                className="px-6 py-2.5 border border-gray-900 dark:border-gray-300 rounded-full text-gray-900 dark:text-gray-300 font-medium hover:bg-gray-900 dark:hover:bg-gray-300 hover:text-white dark:hover:text-black transition"
+                className="px-5 py-2.5 text-sm font-semibold text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-full hover:bg-gray-800 dark:hover:bg-gray-200 transition shadow-lg shadow-gray-900/20 dark:shadow-white/10"
               >
-                Get Free Reading
+                Get Started
               </Link>
-
-               <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition">
-            {theme === "light" ? <Moon size={18}/> : <Sun size={18}/>}
-          </button>
             </div>
-            
           )}
-        </div>
 
+          {/* Mobile Menu Button */}
+          <button className="md:hidden p-2 text-gray-600 dark:text-gray-300" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <XIcon /> : <Menu />}
+          </button>
+        </div>
       </div>
+      
+      {/* Mobile Menu (Simplified) */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-4 space-y-4">
+           {/* Add mobile links here matching desktop */}
+           <Link to="/login" className="block w-full text-center py-2 border border-gray-300 dark:border-slate-700 rounded-lg">Login</Link>
+           <Link to="/register" className="block w-full text-center py-2 bg-amber-500 text-white rounded-lg">Register</Link>
+        </div>
+      )}
     </nav>
   );
 };

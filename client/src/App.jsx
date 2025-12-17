@@ -1,23 +1,46 @@
-import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import { AstrologerAuthProvider } from './context/AstrologerAuthContext'; // Import the new provider
+import React from 'react';
+import { BrowserRouter, Routes, Route, Outlet, Navigate } from 'react-router-dom';
 
-// User Components (Assuming these exist in your project)
+// Contexts
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { AstrologerAuthProvider } from './context/AstrologerAuthContext';
+
+// Components
+import Navbar from './components/common/Navbar'; // Import Navbar
+import Footer from './components/common/Footer'; // Import Footer
+
+// User Pages
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import Dashboard from './pages/Dashboard';
-import Profile from './pages/Profile';
+import Profile from './components/auth/Profile';
 import Home from './pages/Home';
 import ProtectedRoute from './components/auth/ProtectedRoute';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
+import ForgotPassword from './components/auth/ForgotPassword';
+import ResetPassword from './components/auth/ResetPassword';
 
-// Astrologer Components
-import AstrologerLogin from './pages/AstrologerLogin';
-import AstrologerDashboard from './pages/AstrologerDashboard';
+// Astrologer Pages
+import AstrologerLogin from './components/astrologer/AstrologerLogin';
+import AstrologerDashboard from './pages/astrologer/AstrologerDashboard';
 import NotFound from './pages/NotFound';
 
-// Layout to wrap Astrologer routes with their specific Context
+// Admin Pages
+import AdminDashboard from './pages/admin/AdminDashboard';
+
+// --- WRAPPERS ---
+
+const MainLayout = () => {
+  return (
+    <div className="flex flex-col min-h-screen">
+      <Navbar />
+      <main className="flex-grow pt-20"> {/* Padding for fixed navbar */}
+        <Outlet />
+      </main>
+      <Footer />
+    </div>
+  );
+};
+
 const AstrologerLayout = () => {
   return (
     <AstrologerAuthProvider>
@@ -26,43 +49,61 @@ const AstrologerLayout = () => {
   );
 };
 
+const AdminRoute = () => {
+  const { user, loading, isAuthenticated } = useAuth();
+  if (loading) return <div className="h-screen flex items-center justify-center">Loading...</div>;
+  if (!isAuthenticated || user?.role !== 'admin') return <Navigate to="/login" replace />;
+  return <Outlet />;
+};
+
+// --- APP ---
+
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* --- PUBLIC USER ROUTES --- */}
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path='*' element={<NotFound />} />
 
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          {/* === MAIN WEBSITE LAYOUT (Navbar + Footer) === */}
+          <Route element={<MainLayout />}>
 
-          {/* --- ASTROLOGER ROUTES --- */}
-          {/* This wrapper is CRITICAL. It provides the context for the pages inside */}
+            {/* Public Routes */}
+            <Route path="/" element={<Home />} />
+            {/* User Protected Routes */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+
+
+            {/* 404 inside layout (shows nav/footer) */}
+            <Route path='*' element={<NotFound />} />
+          </Route>
+
+
+
           <Route element={<AstrologerLayout />}>
             <Route path="/astrologer/login" element={<AstrologerLogin />} />
             <Route path="/astrologer/dashboard" element={<AstrologerDashboard />} />
           </Route>
 
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+
+
+          <Route element={<AdminRoute />}>
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          </Route>
+
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          } />
+
         </Routes>
       </BrowserRouter>
     </AuthProvider>

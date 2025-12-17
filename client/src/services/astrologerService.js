@@ -1,8 +1,8 @@
+// src/services/astrologerService.js
 import axios from 'axios';
 
-// 1. FIX: Use VITE_API_URL
-const envUrl = import.meta.env.API_URL || 'http://localhost:3000';
-
+// 1. Setup Base URL
+const envUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 const baseURL = envUrl.includes('/api/astrologer') 
   ? envUrl 
   : `${envUrl.replace(/\/$/, '')}/api/astrologer`;
@@ -10,59 +10,57 @@ const baseURL = envUrl.includes('/api/astrologer')
 const api = axios.create({
   baseURL,
   withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  }
+  // Remove default headers here so we can control them per request
 });
 
 const astrologerService = {
   // Login
   login: async (email) => {
     try {
-      // Note: You usually need a password here too, but following your code structure:
       const response = await api.post('/login', { email });
-      
       if (response.data.success) {
-        // 2. FIX: Robust Data Extraction
-        // Check 'astrologer' OR 'data' OR 'user' to ensure we get the object
         return response.data.astrologer || response.data.data || response.data.user; 
-      } else {
-        throw new Error(response.data.message || "Login failed");
       }
+      throw new Error(response.data.message);
     } catch (error) {
-      console.error("Login service error:", error);
-      throw error.response?.data?.message || error.message || "Authentication failed";
+      throw error.response?.data?.message || error.message;
     }
   },
 
-  // Fetch Current Astrologer
+  // Logout
+  logout: async () => {
+      try { await api.post('/logout'); } catch (e) { console.error(e); }
+  },
+
+  // Get Current
   getCurrentAstrologer: async () => {
     try {
       const response = await api.get('/current-astrologer');
-      if (response.data.success) {
-        // This was already working, but let's be safe
-        return response.data.data || response.data.astrologer; 
-      }
-      return null;
+      return response.data.data || response.data.astrologer; 
     } catch (error) {
-      // Don't throw here, just return null so the context knows we aren't logged in
       return null; 
     }
   },
 
-  logout: async () => {
-      try {
-          await api.post('/logout'); 
-      } catch (e) {
-          console.error(e);
-      }
-  },
-
+  // --- REGISTER (FIXED FOR FILE UPLOAD) ---
   register: async (astrologerData) => {
     try {
-      const response = await api.post('/add', astrologerData);
+      const isFormData = astrologerData instanceof FormData;
+      
+      const config = {
+        headers: {
+          // CRITICAL FIX: 
+          // If it is FormData, set Content-Type to undefined.
+          // This lets the browser generate the correct boundary automatically.
+          // If we manually set 'multipart/form-data', the upload WILL FAIL.
+          'Content-Type': isFormData ? undefined : 'application/json',
+        }
+      };
+
+      const response = await api.post('/add', astrologerData, config);
       return response.data;
     } catch (error) {
+      console.error("Register Error:", error.response?.data);
       throw error.response?.data?.message || error.message;
     }
   },
