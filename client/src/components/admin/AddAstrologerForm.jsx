@@ -2,11 +2,12 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import astrologerService from "../../services/astrologerService"; 
+import { User, Mail, Phone, Star, Award, DollarSign, Upload, Image as ImageIcon, AlertCircle } from "lucide-react";
 
 const AddAstrologerForm = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(""); // Added error state for feedback
+  const [error, setError] = useState("");
   
   // File state
   const [profileImage, setProfileImage] = useState(null);
@@ -40,7 +41,6 @@ const AddAstrologerForm = () => {
     setError("");
 
     try {
-      // 1. Construct FormData
       const data = new FormData();
       data.append("name", formData.name);
       data.append("email", formData.email);
@@ -49,117 +49,197 @@ const AddAstrologerForm = () => {
       data.append("experienceYears", formData.experienceYears);
       data.append("price", formData.price);
 
-      // 2. Append the file with the exact key "profileImage" 
-      // This MUST match upload.single("profileImage") in backend routes
       if (profileImage) {
         data.append("profileImage", profileImage);
       }
 
-      // 3. Send to service
       await astrologerService.register(data);
       
+      // Navigate immediately or show success message
       alert("Astrologer Added Successfully!");
-      navigate("/admin/dashboard");
+      window.location.reload(); // Simple reload to refresh list, or handle via parent state
       
     } catch (err) {
       console.error("Submission failed", err);
-      setError(err || "Failed to add astrologer");
+      setError(err.response?.data?.message || "Failed to add astrologer");
     } finally {
       setLoading(false);
     }
   };
 
+  // Shared Input Styles
+  const labelClass = "block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2";
+  const inputContainerClass = "relative group";
+  const iconClass = "absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-amber-500 transition-colors";
+  const inputClass = "w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all";
+
   return (
-    <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Add New Astrologer</h2>
-        <p className="text-gray-500 text-sm mt-1">Enter details to onboard a new expert.</p>
-        {error && <div className="mt-3 p-3 bg-red-100 text-red-700 rounded-md text-sm">{error}</div>}
+    <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800">
+      
+      <div className="mb-8 border-b border-slate-100 dark:border-slate-800 pb-6">
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Onboard New Talent</h2>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Add details to register a new astrologer to the platform.</p>
+        
+        {error && (
+          <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-center gap-3 text-red-600 dark:text-red-400 text-sm font-medium">
+            <AlertCircle size={18} />
+            {error}
+          </div>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Name & Email */}
+        
+        {/* Row 1: Name & Email */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-            <input type="text" name="name" required placeholder="Vikram Singh" 
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-              onChange={handleChange} />
+            <label className={labelClass}>Full Name</label>
+            <div className={inputContainerClass}>
+              <User className={iconClass} />
+              <input 
+                type="text" 
+                name="name" 
+                required 
+                placeholder="Vikram Singh" 
+                className={inputClass}
+                onChange={handleChange} 
+              />
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-            <input type="email" name="email" required placeholder="email@example.com" 
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-              onChange={handleChange} />
+            <label className={labelClass}>Email Address</label>
+            <div className={inputContainerClass}>
+              <Mail className={iconClass} />
+              <input 
+                type="email" 
+                name="email" 
+                required 
+                placeholder="email@example.com" 
+                className={inputClass}
+                onChange={handleChange} 
+              />
+            </div>
           </div>
         </div>
 
-        {/* Phone & Specialization */}
+        {/* Row 2: Phone & Specialization */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-            <input type="tel" name="phone" required placeholder="+91 99999 99999" 
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-              onChange={handleChange} />
+            <label className={labelClass}>Phone Number</label>
+            <div className={inputContainerClass}>
+              <Phone className={iconClass} />
+              <input 
+                type="tel" 
+                name="phone" 
+                required 
+                placeholder="+91 99999 99999" 
+                className={inputClass}
+                onChange={handleChange} 
+              />
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Specialization</label>
-            <select name="specialization" required 
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-              onChange={handleChange}>
-              <option value="">Select Specialization</option>
-              <option value="Vastu Shastra">Vastu Shastra</option>
-              <option value="Vedic Astrology">Vedic Astrology</option>
-              <option value="Numerology">Numerology</option>
-              <option value="Tarot Reading">Tarot Reading</option>
-            </select>
+            <label className={labelClass}>Specialization</label>
+            <div className={inputContainerClass}>
+              <Star className={iconClass} />
+              <select 
+                name="specialization" 
+                required 
+                className={`${inputClass} appearance-none cursor-pointer`}
+                onChange={handleChange}
+              >
+                <option value="">Select Specialization</option>
+                <option value="Vastu Shastra">Vastu Shastra</option>
+                <option value="Vedic Astrology">Vedic Astrology</option>
+                <option value="Numerology">Numerology</option>
+                <option value="Tarot Reading">Tarot Reading</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        {/* Experience & Price */}
+        {/* Row 3: Experience & Price */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Experience (Years)</label>
-            <input type="number" name="experienceYears" required min="0" placeholder="5" 
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-              onChange={handleChange} />
+            <label className={labelClass}>Experience (Years)</label>
+            <div className={inputContainerClass}>
+              <Award className={iconClass} />
+              <input 
+                type="number" 
+                name="experienceYears" 
+                required 
+                min="0" 
+                placeholder="5" 
+                className={inputClass}
+                onChange={handleChange} 
+              />
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Price (per min)</label>
-            <input type="number" name="price" required min="0" placeholder="50" 
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-              onChange={handleChange} />
+            <label className={labelClass}>Price (₹ per min)</label>
+            <div className={inputContainerClass}>
+              <DollarSign className={iconClass} />
+              <input 
+                type="number" 
+                name="price" 
+                required 
+                min="0" 
+                placeholder="50" 
+                className={inputClass}
+                onChange={handleChange} 
+              />
+            </div>
           </div>
         </div>
 
         {/* Image Upload */}
         <div>
-           <label className="block text-sm font-medium text-gray-700 mb-2">Profile Image</label>
-           <div className="flex items-center gap-6">
-             <div className="shrink-0">
-               {imagePreview ? (
-                 <img src={imagePreview} alt="Preview" className="h-20 w-20 object-cover rounded-full border" />
-               ) : (
-                 <div className="h-20 w-20 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 border">
-                   No Img
-                 </div>
-               )}
-             </div>
-             <input type="file" name="profileImage" accept="image/*" 
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
-                onChange={handleImageChange}
-              />
+           <label className={labelClass}>Profile Image</label>
+           <div className="mt-2 flex justify-center rounded-xl border border-dashed border-slate-300 dark:border-slate-700 px-6 py-10 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer relative group">
+              <div className="text-center">
+                 {imagePreview ? (
+                   <div className="relative inline-block">
+                     <img src={imagePreview} alt="Preview" className="h-32 w-32 object-cover rounded-full border-4 border-white dark:border-slate-800 shadow-lg" />
+                     <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Upload className="text-white w-8 h-8" />
+                     </div>
+                   </div>
+                 ) : (
+                   <>
+                     <div className="mx-auto h-16 w-16 text-slate-300 dark:text-slate-600 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+                        <ImageIcon size={32} />
+                     </div>
+                     <div className="flex text-sm text-slate-600 dark:text-slate-400 justify-center">
+                        <span className="relative cursor-pointer rounded-md font-medium text-amber-600 dark:text-amber-500 focus-within:outline-none hover:text-amber-500">
+                           <span>Upload a file</span>
+                        </span>
+                        <p className="pl-1">or drag and drop</p>
+                     </div>
+                     <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">PNG, JPG, GIF up to 5MB</p>
+                   </>
+                 )}
+                 <input 
+                   type="file" 
+                   name="profileImage" 
+                   accept="image/*" 
+                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                   onChange={handleImageChange} 
+                 />
+              </div>
            </div>
         </div>
 
         {/* Submit */}
-        <div className="flex justify-end pt-4">
-          <button type="submit" disabled={loading}
-            className={`px-6 py-2.5 rounded-lg text-white font-medium shadow-md transition-all 
-              ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}>
-            {loading ? "Uploading..." : "Create Astrologer"}
+        <div className="pt-4">
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold rounded-xl shadow-lg hover:shadow-amber-500/25 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loading ? "Creating Profile..." : "Create Astrologer Profile"}
           </button>
         </div>
+
       </form>
     </div>
   );

@@ -2,30 +2,45 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Outlet, Navigate } from 'react-router-dom';
 
 // Contexts
-import { AuthProvider, useAuth } from './context/AuthContext'; // Import useAuth here
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { AstrologerAuthProvider } from './context/AstrologerAuthContext';
 
-// User Components
+// Components
+import Navbar from './components/common/Navbar'; // Import Navbar
+import Footer from './components/common/Footer'; // Import Footer
+
+// User Pages
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import Dashboard from './pages/Dashboard';
-import Profile from './pages/Profile';
+import Profile from './components/auth/Profile';
 import Home from './pages/Home';
 import ProtectedRoute from './components/auth/ProtectedRoute';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
+import ForgotPassword from './components/auth/ForgotPassword';
+import ResetPassword from './components/auth/ResetPassword';
 
-// Astrologer Components
-import AstrologerLogin from './pages/AstrologerLogin';
-import AstrologerDashboard from './pages/AstrologerDashboard';
+// Astrologer Pages
+import AstrologerLogin from './components/astrologer/AstrologerLogin';
+import AstrologerDashboard from './pages/astrologer/AstrologerDashboard';
 import NotFound from './pages/NotFound';
 
-// Admin Components
-import AdminDashboard from './pages/AdminDashboard'; // Ensure this path matches where you saved the dashboard
+// Admin Pages
+import AdminDashboard from './pages/admin/AdminDashboard';
 
-// --- INLINE WRAPPERS & ROUTE GUARDS ---
+// --- WRAPPERS ---
 
-// 1. Astrologer Context Wrapper
+const MainLayout = () => {
+  return (
+    <div className="flex flex-col min-h-screen">
+      <Navbar />
+      <main className="flex-grow pt-20"> {/* Padding for fixed navbar */}
+        <Outlet />
+      </main>
+      <Footer />
+    </div>
+  );
+};
+
 const AstrologerLayout = () => {
   return (
     <AstrologerAuthProvider>
@@ -34,69 +49,60 @@ const AstrologerLayout = () => {
   );
 };
 
-// 2. Admin Route Guard (Defined directly here as requested)
 const AdminRoute = () => {
   const { user, loading, isAuthenticated } = useAuth();
-
-  if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>; // Simple loading state
-  }
-
-  // Check if user is logged in AND is an admin
-  // Make sure your backend User model actually sends 'role'
-  if (!isAuthenticated || user?.role !== 'admin') {
-    return <Navigate to="/login" replace />;
-  }
-
+  if (loading) return <div className="h-screen flex items-center justify-center">Loading...</div>;
+  if (!isAuthenticated || user?.role !== 'admin') return <Navigate to="/login" replace />;
   return <Outlet />;
 };
 
-// --- MAIN APP COMPONENT ---
+// --- APP ---
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* --- PUBLIC USER ROUTES --- */}
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
-          
-          {/* --- ADMIN ROUTES --- */}
-          {/* We wrap admin routes in the AdminRoute guard we created above */}
-          <Route element={<AdminRoute />}>
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+
+          {/* === MAIN WEBSITE LAYOUT (Navbar + Footer) === */}
+          <Route element={<MainLayout />}>
+
+            {/* Public Routes */}
+            <Route path="/" element={<Home />} />
+            {/* User Protected Routes */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+
+
+            {/* 404 inside layout (shows nav/footer) */}
+            <Route path='*' element={<NotFound />} />
           </Route>
 
-          {/* --- ASTROLOGER ROUTES --- */}
+
+
           <Route element={<AstrologerLayout />}>
             <Route path="/astrologer/login" element={<AstrologerLogin />} />
             <Route path="/astrologer/dashboard" element={<AstrologerDashboard />} />
           </Route>
 
-          {/* --- PROTECTED USER ROUTES --- */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
 
-          {/* 404 Not Found */}
-          <Route path='*' element={<NotFound />} />
+
+          <Route element={<AdminRoute />}>
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          </Route>
+
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          } />
 
         </Routes>
       </BrowserRouter>

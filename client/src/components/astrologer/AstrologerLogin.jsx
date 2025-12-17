@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { ShieldCheck, User, Lock, Activity, ArrowLeft, Eye, EyeOff } from 'lucide-react'
-import { useAstrologerAuth } from '../context/AstrologerAuthContext'
+import { useAstrologerAuth } from '../../context/AstrologerAuthContext'
 
 const AstrologerLogin = () => {
   const [email, setEmail] = useState('')

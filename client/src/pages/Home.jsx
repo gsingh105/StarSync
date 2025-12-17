@@ -1,20 +1,20 @@
 import React from 'react'
-import Navbar from '../components/common/Navbar'
-import HeroSection from './Home/HeroSection'
-import FeaturesSection from './Home/FeaturesSection'
-import TestimonialSection from './Home/TestimonialSection'
-import Footer from './Home/Footer'
-
+import Navbar from '../components/common/Navbar' // Check path
+import HeroSection from '../components/HeroSection' // Check path
+import FeaturesSection from '../components/FeaturesSection' // Check path
+import TestimonialSection from '../components/TestimonialSection' // Check path
+import Footer from '../components/common/Footer' // Check path
 
 const Home = () => (
-  <div className="min-h-screen bg-gray-50 text-gray-800 font-sans">
+  // Added dark:bg-slate-950 to the main wrapper
+  <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white font-sans transition-colors duration-500">
     <Navbar />
-    <main className="pt-20">
+    <main>
       <HeroSection />
       <FeaturesSection />
       <TestimonialSection />
     </main>
-    <Footer />
+    {/* <Footer /> */}
   </div>
 )
 
