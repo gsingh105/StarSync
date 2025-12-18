@@ -6,13 +6,12 @@ export const initiateCallCheck = async (req, res) => {
     try {
         const { astrologerId, chosenMinutes } = req.body;
 
-        // Ensure inputs exist and are the correct type
         const mins = Number(chosenMinutes);
         if (!astrologerId || isNaN(mins) || mins < 1) {
             return res.status(400).json({ success: false, message: "Invalid request parameters" });
         }
 
-        const user = await authModel.findById(req.user?.id); // req.user.id must exist via middleware
+        const user = await authModel.findById(req.user?.id); 
         const astrologer = await Astrologer.findById(astrologerId);
 
         if (!user || !astrologer) {

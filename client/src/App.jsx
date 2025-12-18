@@ -26,8 +26,8 @@ import NotFound from './pages/NotFound';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
+import KundliPage from './pages/KundliPage';
 
-// --- WRAPPERS ---
 
 const MainLayout = () => {
   return (
@@ -63,13 +63,8 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-
-          {/* === MAIN WEBSITE LAYOUT (Navbar + Footer) === */}
           <Route element={<MainLayout />}>
-
-            {/* Public Routes */}
             <Route path="/" element={<Home />} />
-            {/* User Protected Routes */}
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Dashboard />
@@ -77,8 +72,8 @@ function App() {
             } />
 
 
-            {/* 404 inside layout (shows nav/footer) */}
             <Route path='*' element={<NotFound />} />
+            <Route path='/kundli' element={<KundliPage/>}/>
           </Route>
 
 
