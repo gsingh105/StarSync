@@ -1,17 +1,27 @@
 import { io } from 'socket.io-client';
 
-const SOCKET_URL = import.meta.env.API_URL || 'http://localhost:3000';
+const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 class SocketService {
     socket = null;
 
     connect(userId) {
         if (!this.socket) {
-            this.socket = io(SOCKET_URL);
+            // FIX: Added transports and withCredentials to stop the 400 error
+            this.socket = io(SOCKET_URL, {
+                transports: ['websocket'], 
+                withCredentials: true,
+                autoConnect: true
+            });
             
             this.socket.on('connect', () => {
-                console.log('Socket Connected');
+                console.log('Socket Connected with ID:', this.socket.id);
+                // Registering the user/astrologer so the backend knows who is who
                 this.socket.emit('register', userId);
+            });
+
+            this.socket.on('connect_error', (err) => {
+                console.error('Socket Connection Error:', err.message);
             });
         }
     }
@@ -23,14 +33,14 @@ class SocketService {
         }
     }
 
-    // Generic emit
     emit(eventName, data) {
-        if (this.socket) {
+        if (this.socket && this.socket.connected) {
             this.socket.emit(eventName, data);
+        } else {
+            console.warn(`Socket not connected. Cannot emit: ${eventName}`);
         }
     }
 
-    // Generic listener
     on(eventName, callback) {
         if (this.socket) {
             this.socket.on(eventName, callback);

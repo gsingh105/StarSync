@@ -6,12 +6,15 @@ const authSchema = new Schema(
     {
         fullName: { type: String, required: true },
         email: { type: String, required: true, unique: true },
-        password: { type: String, required: true }, 
+        password: { type: String, required: true },
         role: { type: String, default: "user" },
         refreshToken: { type: String, default: null },
-        
-        googleId: { type: String, unique: true, sparse: true }, 
+        googleId: { type: String, unique: true, sparse: true },
         profileImage: { type: String },
+        walletBalance: {
+            type: Number,
+            default: 0
+        },
 
         resetPasswordToken: String,
         resetPasswordExpire: Date
@@ -19,8 +22,8 @@ const authSchema = new Schema(
     { timestamps: true }
 )
 
-authSchema.pre("save", async function () { 
-    if (!this.isModified("password")) return 
+authSchema.pre("save", async function () {
+    if (!this.isModified("password")) return
     const salt = await bcrypt.genSalt(10)
     this.password = await bcrypt.hash(this.password, salt)
 })

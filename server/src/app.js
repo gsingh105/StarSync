@@ -8,6 +8,9 @@ import { errorHandler } from "./utils/errorHanlder.js";
 import userRoutes from "./routes/auth.routes.js";
 import astrologerRoutes from "./routes/astrologer.routes.js";
 import sessionRoutes from "./routes/session.routes.js";
+import paymentRoutes from "./routes/payment.routes.js"
+import callRoutes from "./routes/call.routes.js"
+import reviewRoutes from "./routes/review.routes.js"
 
 const app = express();
 
@@ -33,6 +36,9 @@ app.use(cookieParser());
 app.use("/api/auth", userRoutes);
 app.use("/api/astrologer", astrologerRoutes);
 app.use("/session", sessionRoutes);
+app.use("/api/payment",paymentRoutes)
+app.use("/api/call", callRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 // Error Handler (Always last)
 app.use(errorHandler);

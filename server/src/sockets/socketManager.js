@@ -1,77 +1,83 @@
-// src/sockets/socketManager.js
 import { createToken } from "../config/livekit.js";
-import { findUserById } from "../dao/auth.dao.js";
+import authModel from "../models/auth.model.js";
+import Astrologer from "../models/astrologer.model.js";
+import CallTransaction from "../models/callTransaction.model.js";
 
-// Store online users
 const onlineUsers = new Map();
+const callTimers = new Map();
 
 export const setupSocketIO = (io) => {
     io.on("connection", (socket) => {
-        // 1. Register User
         socket.on("register", (userId) => {
             if (userId) {
                 onlineUsers.set(userId, socket.id);
-                // console.log(`User registered: ${userId}`);
+                console.log(`User ${userId} registered.`);
             }
         });
 
-        // 2. Call Request
         socket.on("call_request", (data) => {
-            const { callerId, callerName, receiverId } = data;
+            const { callerId, callerName, receiverId, durationSeconds } = data;
             const receiverSocketId = onlineUsers.get(receiverId);
 
             if (receiverSocketId) {
                 io.to(receiverSocketId).emit("incoming_call", {
-                    callerId,
-                    callerName,
+                    callerId, callerName, durationSeconds,
                     roomId: `room-${callerId}-${receiverId}`
                 });
             } else {
-                socket.emit("call_failed", { message: "Astrologer is offline" });
+                socket.emit("call_failed", { message: "Astrologer is offline." });
             }
         });
 
-        // 3. Accept Call
         socket.on("accept_call", async (data) => {
-            const { callerId, receiverId, roomId, callerName, receiverName } = data;
+            const { callerId, receiverId, roomId, durationSeconds } = data;
             
-            // Parallel data fetching for speed
-            const [user, receiver] = await Promise.all([
-                findUserById(callerId),
-                findUserById(receiverId) // Ensure this DAO method exists or use generic findById
-            ]);
+            try {
+                const [user, astro] = await Promise.all([
+                    authModel.findById(callerId),
+                    Astrologer.findById(receiverId)
+                ]);
 
-            const callerSocketId = onlineUsers.get(callerId);
-            const receiverSocketId = onlineUsers.get(receiverId);
+                const minutes = durationSeconds / 60;
+                const totalCost = astro.price * minutes;
 
-            if (callerSocketId && receiverSocketId) {
-                try {
-                    // Generate LiveKit tokens
-                    const tokenCaller = await createToken(callerId, roomId, user?.fullName || callerName);
-                    const tokenReceiver = await createToken(receiverId, roomId, receiverName);
-
-                    io.to(callerSocketId).emit("call_accepted", { roomId, token: tokenCaller });
-                    io.to(receiverSocketId).emit("call_accepted", { roomId, token: tokenReceiver });
-
-                } catch (err) {
-                    console.error("Token Error:", err);
+                if (user.walletBalance < totalCost) {
+                    socket.emit("call_failed", { message: "User balance low." });
+                    io.to(onlineUsers.get(callerId)).emit("call_failed", { message: "Insufficient balance." });
+                    return;
                 }
+
+                // PAY-ON-CONNECT: Deduct only now
+                user.walletBalance -= totalCost;
+                await user.save();
+
+                await CallTransaction.create({
+                    userId: user._id,
+                    astrologerId: astro._id,
+                    amount: totalCost,
+                    durationMinutes: minutes
+                });
+
+                const tokenCaller = await createToken(callerId, roomId, user.fullName);
+                const tokenReceiver = await createToken(receiverId, roomId, astro.name);
+
+                io.to(onlineUsers.get(callerId)).emit("call_accepted", { roomId, token: tokenCaller });
+                socket.emit("call_accepted", { roomId, token: tokenReceiver });
+
+                const timer = setTimeout(() => {
+                    io.to(onlineUsers.get(callerId)).emit("force_disconnect");
+                    socket.emit("force_disconnect");
+                }, durationSeconds * 1000);
+
+                callTimers.set(roomId, timer);
+            } catch (err) {
+                console.error("Accept Error:", err);
             }
         });
 
-        // 4. Reject Call
-        socket.on("reject_call", (data) => {
-            const callerSocketId = onlineUsers.get(data.callerId);
-            if (callerSocketId) io.to(callerSocketId).emit("call_rejected");
-        });
-
-        // 5. Disconnect
         socket.on("disconnect", () => {
-            for (const [key, value] of onlineUsers.entries()) {
-                if (value === socket.id) {
-                    onlineUsers.delete(key);
-                    break;
-                }
+            for (const [uid, sid] of onlineUsers.entries()) {
+                if (sid === socket.id) onlineUsers.delete(uid);
             }
         });
     });
