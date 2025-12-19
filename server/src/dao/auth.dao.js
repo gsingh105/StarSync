@@ -27,3 +27,11 @@ export const updateRefreshToken = async (userId, refreshToken) => {
         { new: true }
     )
 }
+
+export const updateUserDetails = async (userId, updateData) => {
+    return await userModel.findByIdAndUpdate(
+        userId,
+        { $set: updateData },
+        { new: true, runValidators: true }
+    ).select("-password");
+};;

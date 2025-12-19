@@ -1,10 +1,10 @@
-import { googleLoginService, loginUserService, registerUserServices } from "../services/auth.services.js"
+import { googleLoginService, loginUserService, registerUserServices} from "../services/auth.services.js"
 import { successResponse, errorResponse } from "../utils/response.js"
 import { cookieOptionsForAcessToken, cookieOptionsForRefreshToken } from "./cookie.config.js"
 import authModel from "../models/auth.model.js"
 import sendEmail from "../utils/sendEmail.js"
 import crypto from "crypto"
-import { findUserById, updateRefreshToken } from "../dao/auth.dao.js"
+import { findUserById, updateRefreshToken, updateUserDetails } from "../dao/auth.dao.js"
 
 export const registerUserController = async (req, res, next) => {
     try {
@@ -142,3 +142,24 @@ export const googleLoginController = async (req, res, next) => {
         next(err)
     }
 }
+
+export const updateProfileController = async (req, res, next) => {
+    try {
+        const userId = req.user.id; // From your authMiddleware
+        const { fullName, email } = req.body;
+
+        // Check if email is being changed and if it's already taken
+        if (email) {
+            const existingUser = await authModel.findOne({ email, _id: { $ne: userId } });
+            if (existingUser) {
+                return res.status(409).json({ success: false, message: "Email already in use" });
+            }
+        }
+
+        const updatedUser = await updateUserDetails(userId, { fullName, email });
+        
+        return successResponse(res, "Profile updated successfully", updatedUser, 200);
+    } catch (error) {
+        next(error);
+    }
+};

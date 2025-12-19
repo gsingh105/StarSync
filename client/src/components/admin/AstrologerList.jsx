@@ -1,15 +1,16 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import astrologerService from '../../services/astrologerService';
-import { 
-  Edit2, Trash2, X, Save, User, Mail, DollarSign, 
-  Clock, Award, Star, Search, Filter, RefreshCcw 
+import {
+  Edit2, Trash2, X, Save, User, Star, Search, Filter, RefreshCcw, Award, DollarSign
 } from 'lucide-react';
+import toast from 'react-hot-toast';
+import axios from 'axios';
 
 const AstrologerList = () => {
   const [astrologers, setAstrologers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // --- Filter States ---
   const [searchTerm, setSearchTerm] = useState('');
   const [specializationFilter, setSpecializationFilter] = useState('All');
@@ -39,19 +40,16 @@ const AstrologerList = () => {
   // --- Filter Logic ---
   const filteredAstrologers = useMemo(() => {
     return astrologers.filter(astro => {
-      // 1. Search (Name or Email)
-      const matchesSearch = 
-        astro.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      const matchesSearch =
+        astro.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         astro.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
-      // 2. Specialization
-      const matchesSpec = 
-        specializationFilter === 'All' || 
+      const matchesSpec =
+        specializationFilter === 'All' ||
         astro.specialization === specializationFilter;
 
-      // 3. Status (Assuming isActive is boolean)
-      const matchesStatus = 
-        statusFilter === 'All' || 
+      const matchesStatus =
+        statusFilter === 'All' ||
         (statusFilter === 'active' && astro.isActive) ||
         (statusFilter === 'inactive' && !astro.isActive);
 
@@ -59,10 +57,8 @@ const AstrologerList = () => {
     });
   }, [astrologers, searchTerm, specializationFilter, statusFilter]);
 
-  // Extract unique specializations for dropdown
   const uniqueSpecializations = ['All', ...new Set(astrologers.map(a => a.specialization).filter(Boolean))];
 
-  // Reset Filters
   const clearFilters = () => {
     setSearchTerm('');
     setSpecializationFilter('All');
@@ -76,20 +72,39 @@ const AstrologerList = () => {
   };
 
   const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
+  // NEW: handleUpdate implementation
   const handleUpdate = async (e) => {
     e.preventDefault();
     setIsUpdating(true);
     try {
-      await astrologerService.update(editingAstro._id, formData);
-      setAstrologers(prev => prev.map(a => (a._id === editingAstro._id ? { ...a, ...formData } : a)));
+      // Replace with your actual update service/API call
+      // Example: await astrologerService.update(editingAstro._id, formData);
+      await axios.patch(`http://localhost:3000/api/astrologer/update/${editingAstro._id}`, formData, { withCredentials: true });
+      
+      toast.success('Profile updated successfully!');
       setEditingAstro(null);
-    } catch (err) {
-      alert("Failed to update astrologer. Please try again.");
+      fetchAstrologers(); // Refresh list
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update profile');
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    // Custom toast confirmation instead of browser window.confirm for better UI
+    if (window.confirm("Are you sure you want to remove this star guide? This action cannot be undone.")) {
+      try {
+        await axios.delete(`http://localhost:3000/api/astrologer/delete/${id}`, { withCredentials: true });
+        toast.success('Astrologer removed from platform');
+        setAstrologers(prev => prev.filter(astro => astro._id !== id));
+      } catch (error) {
+        toast.error('Failed to delete astrologer');
+      }
     }
   };
 
@@ -108,26 +123,22 @@ const AstrologerList = () => {
 
   return (
     <div className="space-y-6">
-      
       {/* --- FILTER BAR --- */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
-        
-        {/* Search Input */}
         <div className="md:col-span-5 relative group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-amber-500 transition-colors" />
-          <input 
-            type="text" 
-            placeholder="Search by Name or Email..." 
+          <input
+            type="text"
+            placeholder="Search by Name or Email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all"
           />
         </div>
 
-        {/* Specialization Filter */}
         <div className="md:col-span-3 relative group">
           <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <select 
+          <select
             value={specializationFilter}
             onChange={(e) => setSpecializationFilter(e.target.value)}
             className="w-full pl-10 pr-8 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none appearance-none cursor-pointer transition-all"
@@ -138,10 +149,9 @@ const AstrologerList = () => {
           </select>
         </div>
 
-        {/* Status Filter */}
         <div className="md:col-span-3 relative group">
-           <div className="absolute left-4 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-slate-400" />
-           <select 
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-slate-400" />
+          <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="w-full pl-8 pr-8 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none appearance-none cursor-pointer transition-all"
@@ -152,9 +162,8 @@ const AstrologerList = () => {
           </select>
         </div>
 
-        {/* Reset Button */}
         <div className="md:col-span-1">
-          <button 
+          <button
             onClick={clearFilters}
             className="w-full h-full flex items-center justify-center p-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-500 hover:text-red-500 rounded-xl transition-all border border-transparent hover:border-red-200"
             title="Reset Filters"
@@ -176,7 +185,7 @@ const AstrologerList = () => {
                 <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Experience</th>
                 <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Price</th>
                 <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Status</th>
-                <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Actions</th>
+                <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -184,17 +193,15 @@ const AstrologerList = () => {
                 <tr>
                   <td colSpan="7" className="px-6 py-12 text-center text-slate-400">
                     <div className="flex flex-col items-center gap-2">
-                       <Search size={24} className="opacity-50" />
-                       <p>No astrologers found matching your filters.</p>
-                       <button onClick={clearFilters} className="text-amber-500 font-bold hover:underline text-sm">Clear Filters</button>
+                      <Search size={24} className="opacity-50" />
+                      <p>No astrologers found matching your filters.</p>
+                      <button onClick={clearFilters} className="text-amber-500 font-bold hover:underline text-sm">Clear Filters</button>
                     </div>
                   </td>
                 </tr>
               ) : (
                 filteredAstrologers.map((astro) => (
                   <tr key={astro._id} className="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                    
-                    {/* Profile Image */}
                     <td className="px-6 py-4">
                       <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-700">
                         {astro.profileImage ? (
@@ -205,7 +212,6 @@ const AstrologerList = () => {
                       </div>
                     </td>
 
-                    {/* Name & Email */}
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
                         <span className="font-bold text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
@@ -215,44 +221,47 @@ const AstrologerList = () => {
                       </div>
                     </td>
 
-                    {/* Specialization */}
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-800">
                         {astro.specialization}
                       </span>
                     </td>
 
-                    {/* Experience */}
                     <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300 font-medium">
                       {astro.experienceYears} Years
                     </td>
 
-                    {/* Price */}
                     <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">
                       ₹{astro.price}<span className="text-xs font-normal text-slate-500">/min</span>
                     </td>
-                    
-                    {/* Status */}
+
                     <td className="px-6 py-4">
-                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${
-                         astro.isActive 
-                           ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-900' 
-                           : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'
-                       }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${astro.isActive ? 'bg-green-500' : 'bg-slate-400'}`}></span>
-                          {astro.isActive ? 'Active' : 'Inactive'}
-                       </span>
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${astro.isActive
+                        ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-900'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+                        }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${astro.isActive ? 'bg-green-500' : 'bg-slate-400'}`}></span>
+                        {astro.isActive ? 'Active' : 'Inactive'}
+                      </span>
                     </td>
 
-                    {/* Actions */}
                     <td className="px-6 py-4">
-                      <button 
-                        onClick={() => handleEditClick(astro)}
-                        className="p-2 text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-all"
-                        title="Edit Details"
-                      >
-                        <Edit2 size={18} />
-                      </button>
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => handleEditClick(astro)}
+                          className="p-2 text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-all"
+                          title="Edit Details"
+                        >
+                          <Edit2 size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(astro._id)}
+                          className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+                          title="Delete Guide"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -262,12 +271,11 @@ const AstrologerList = () => {
         </div>
       </div>
 
-      {/* --- EDIT MODAL (Keep previous implementation) --- */}
+      {/* --- EDIT MODAL --- */}
       {editingAstro && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden animate-in fade-in zoom-in duration-200">
-             {/* Header */}
-             <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Edit2 size={18} className="text-amber-500" />
                 Edit Astrologer Profile
@@ -277,7 +285,6 @@ const AstrologerList = () => {
               </button>
             </div>
 
-            {/* Form */}
             <form onSubmit={handleUpdate} className="p-6 space-y-4">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Full Name</label>
@@ -305,21 +312,20 @@ const AstrologerList = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                 <div className="space-y-2">
+                <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Price per min (₹)</label>
                   <div className="relative">
                     <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                     <input type="number" name="price" value={formData.price || ''} onChange={handleInputChange} className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all" />
                   </div>
                 </div>
-                
-                {/* Status Toggle in Edit Form */}
+
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Account Status</label>
-                  <select 
-                    name="isActive" 
-                    value={formData.isActive ? 'true' : 'false'} 
-                    onChange={(e) => setFormData({...formData, isActive: e.target.value === 'true'})}
+                  <select
+                    name="isActive"
+                    value={formData.isActive ? 'true' : 'false'}
+                    onChange={(e) => setFormData({ ...formData, isActive: e.target.value === 'true' })}
                     className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all appearance-none cursor-pointer"
                   >
                     <option value="true">Active</option>

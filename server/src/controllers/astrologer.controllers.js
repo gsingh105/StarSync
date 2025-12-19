@@ -1,4 +1,4 @@
-import { addAstrologerService, getAllAstrologersService, loginAstrologerServices } from "../services/astrologer.services.js";
+import { addAstrologerService, getAllAstrologersService, loginAstrologerServices, updateAstrologerService, deleteAstrologerService } from "../services/astrologer.services.js";
 import { BadRequestError } from "../utils/errorHanlder.js";
 import { successResponse } from "../utils/response.js";
 import { cookieOptionsForAcessToken } from "./cookie.config.js";
@@ -149,5 +149,30 @@ export const getAstrologerReviews = async (req, res) => {
     } catch (err) {
         console.error("Reviews Error:", err);
         res.status(500).json({ message: "Internal Server Error in Reviews" });
+    }
+};
+
+export const updateAstrologerController = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        // Clean up data (ensure numbers are numbers)
+        const updateData = { ...req.body };
+        if (updateData.price) updateData.price = Number(updateData.price);
+        if (updateData.experienceYears) updateData.experienceYears = Number(updateData.experienceYears);
+
+        const result = await updateAstrologerService(id, updateData);
+        return successResponse(res, "Astrologer updated successfully", result, 200);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const deleteAstrologerController = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        await deleteAstrologerService(id);
+        return successResponse(res, "Astrologer deleted successfully", {}, 200);
+    } catch (error) {
+        next(error);
     }
 };

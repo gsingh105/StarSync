@@ -5,9 +5,10 @@ import {
     getCurrentAstrologer,
     loginAstrologerController,
     logoutAstrolgerController,
-    // ADD THESE TWO IMPORTS
     getAstrologerStats,
-    getAstrologerReviews
+    getAstrologerReviews,
+    updateAstrologerController,
+    deleteAstrologerController
 } from "../controllers/astrologer.controllers.js";
 import { astrologerMiddleware } from "../middlewares/astrologerAuthMiddleware.js";
 import { authMiddleware } from "../middlewares/autMiddleware.js";
@@ -28,6 +29,18 @@ router.post(
     addAstrologerController
 );
 router.get("/current-astrologer", astrologerMiddleware, getCurrentAstrologer);
+router.patch(
+    "/update/:id",
+    authMiddleware,
+    adminMiddleware,
+    updateAstrologerController
+);
+router.delete(
+    "/delete/:id",
+    authMiddleware,
+    adminMiddleware,
+    deleteAstrologerController
+);
 
 router.get("/stats", astrologerMiddleware, getAstrologerStats);
 router.get("/reviews", astrologerMiddleware, getAstrologerReviews);

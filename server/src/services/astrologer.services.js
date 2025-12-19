@@ -1,4 +1,4 @@
-import { createAstrologer, findAstrologerByEmail, findAllActiveAstrologers } from "../dao/astrologer.dao.js";
+import { createAstrologer, findAstrologerByEmail, findAllActiveAstrologers, updateAstrologerById,deleteAstrologerById} from "../dao/astrologer.dao.js";
 import { ConflictError, NotFoundError } from "../utils/errorHanlder.js"; // Check spelling of errorHandler
 import AstrologerModel from '../models/astrologer.model.js';
 import { signToken } from "../utils/token.js";
@@ -28,7 +28,19 @@ export const loginAstrologerServices = async (email, password) => {
 
 
     const astrologerData = astrologer.toObject();
-    delete astrologerData.password; 
+    delete astrologerData.password;
 
     return { astrologer: astrologerData, token };
+};
+
+export const updateAstrologerService = async (id, updateData) => {
+    const updatedAstro = await updateAstrologerById(id, updateData);
+    if (!updatedAstro) throw new NotFoundError("Astrologer not found");
+    return updatedAstro;
+};
+
+export const deleteAstrologerService = async (id) => {
+    const deletedAstro = await deleteAstrologerById(id);
+    if (!deletedAstro) throw new NotFoundError("Astrologer not found");
+    return deletedAstro;
 };

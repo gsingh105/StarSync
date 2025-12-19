@@ -2,13 +2,29 @@ import React, { useState } from 'react';
 import AddAstrologerForm from '../../components/admin/AddAstrologerForm';
 import AstrologerList from '../../components/admin/AstrologerList';
 import { Plus, Users, Shield, ArrowLeft } from 'lucide-react';
+import { Toaster, toast } from 'react-hot-toast'; // Import toast
 
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState('list'); // 'list' or 'add'
+  const [activeTab, setActiveTab] = useState('list');
+
+  // Callback for when an astrologer is successfully added
+  const handleAddSuccess = () => {
+    setActiveTab('list');
+    toast.success('Star Guide added to the universe successfully!', {
+      icon: '✨',
+      style: {
+        borderRadius: '12px',
+        background: '#1e293b',
+        color: '#fff',
+      },
+    });
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-gray-100 font-sans relative overflow-hidden transition-colors duration-500">
-      
+      {/* Toast Pop-up Container */}
+      <Toaster position="top-right" reverseOrder={false} />
+
       {/* Cosmic Background Effects */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[100px]"></div>
@@ -31,7 +47,6 @@ const AdminDashboard = () => {
              </p>
            </div>
            
-           {/* Tab Toggle Buttons */}
            <div className="bg-white dark:bg-slate-900 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex">
              <button
                onClick={() => setActiveTab('list')}
@@ -60,7 +75,6 @@ const AdminDashboard = () => {
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           {activeTab === 'list' ? (
             <div className="bg-white dark:bg-slate-900/50 backdrop-blur-sm rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden min-h-[500px]">
-               {/* You might need to style AstrologerList internally as well, or pass className props if supported */}
                <AstrologerList />
             </div>
           ) : (
@@ -74,12 +88,12 @@ const AdminDashboard = () => {
                </button>
                
                <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden p-1">
-                 <AddAstrologerForm />
+                 {/* Pass the success handler to the form */}
+                 <AddAstrologerForm onCreated={handleAddSuccess} />
                </div>
             </div>
           )}
         </div>
-        
       </main>
     </div>
   );
