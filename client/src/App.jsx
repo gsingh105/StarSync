@@ -27,13 +27,16 @@ import NotFound from './pages/NotFound';
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
 import KundliPage from './pages/KundliPage';
+import DailyHoroscope from './pages/DailyHoroscope';
+import MatchingPage from './pages/MatchingPage';
 
 
 const MainLayout = () => {
   return (
-    <div className="flex flex-col min-h-screen">
+    // Remove bg-black here so it follows the body background
+    <div className="flex flex-col min-h-screen bg-transparent">
       <Navbar />
-      <main className="flex-grow pt-20"> {/* Padding for fixed navbar */}
+      <main className="grow "> {/* Removed bg-black */}
         <Outlet />
       </main>
       <Footer />
@@ -72,8 +75,10 @@ function App() {
             } />
 
 
+            <Route path='/kundli' element={<KundliPage />} />
+            <Route path="/horoscope" element={<DailyHoroscope />} />
+            <Route path="/compatibility" element={<MatchingPage />} />
             <Route path='*' element={<NotFound />} />
-            <Route path='/kundli' element={<KundliPage/>}/>
           </Route>
 
 

@@ -1,25 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Moon, Sun, Menu, X as XIcon } from "lucide-react";
+import { Menu, X as XIcon, Sparkles, UserCircle, LayoutDashboard, Settings, LogOut, ChevronDown } from "lucide-react";
 
 const Navbar = () => {
   const { user, loading, logout } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
   const navigate = useNavigate();
+  const location = useLocation();
 
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  // Close dropdowns on click outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (!e.target.closest('.user-menu')) setShowDropdown(false);
@@ -33,137 +23,135 @@ const Navbar = () => {
     navigate('/');
   };
 
-  const getInitials = (name) => {
-    if (!name) return "U";
-    return name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
-  };
-
-  const toggleTheme = () => {
-    setTheme(prev => prev === "light" ? "dark" : "light");
-  };
+  const navItems = [
+    { name: 'Horoscope', link: '/horoscope' },
+    { name: 'Next Day', link: '/horoscope/next-day' },
+    { name: 'Kundli', link: '/kundli' },
+    { name: 'Matching', link: '/compatibility' },
+    { name: 'Panchang', link: '/panchang' }
+  ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-200 dark:border-slate-800">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#020617]/80 backdrop-blur-xl border-b border-white/5">
+      <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between h-20">
 
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 group">
-          <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-amber-300">
-            StarSync
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20 group-hover:scale-110 transition-transform">
+            <Sparkles className="text-white" size={22} fill="currentColor" />
+          </div>
+          <span className="text-2xl font-black tracking-tighter text-white uppercase">
+            Star<span className="text-amber-500">Sync</span>
           </span>
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center gap-8 text-sm font-medium text-gray-600 dark:text-gray-300">
-          {['Horoscopes', 'Kundli', 'Compatibility'].map((item) => (
-             <a key={item} href={`#${item.toLowerCase()}`} className="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">
-               {item}
-             </a>
+        <div className="hidden lg:flex items-center gap-1">
+          {navItems.map((item) => (
+            <Link
+              key={item.name}
+              to={item.link}
+              className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${
+                location.pathname === item.link
+                  ? 'text-amber-500 bg-amber-500/10'
+                  : 'text-slate-400 hover:text-amber-400'
+              }`}
+            >
+              {item.name}
+            </Link>
           ))}
         </div>
 
         {/* Right Section */}
-        <div className="flex items-center gap-4">
-          
-          {/* Theme Toggle */}
-          <button 
-            onClick={toggleTheme} 
-            className="p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-slate-800 transition-colors"
-          >
-            {theme === "light" ? <Moon size={20}/> : <Sun size={20}/>}
-          </button>
-
+        <div className="flex items-center gap-3">
           {loading ? (
-            <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-slate-700 animate-pulse"></div>
+            <div className="w-10 h-10 rounded-xl bg-slate-800 animate-pulse"></div>
           ) : user ? (
             <div className="relative user-menu">
               <button
                 onClick={() => setShowDropdown(!showDropdown)}
-                className="flex items-center gap-3 pl-2 pr-1 py-1 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition border border-transparent hover:border-gray-200 dark:hover:border-slate-700"
+                className="flex items-center gap-3 p-1 rounded-2xl bg-slate-900 border border-white/5 hover:border-amber-500/30 transition-all"
               >
-                <span className="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-200">
-                  {user.name || user.fullName?.split(' ')[0]}
-                </span>
-                <div className="w-9 h-9 rounded-full bg-amber-500 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-amber-500/20">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-sm font-black shadow-md">
                   {user.profileImage ? (
-                    <img src={user.profileImage} className="w-full h-full rounded-full object-cover" alt="profile" />
+                    <img src={user.profileImage} className="w-full h-full rounded-xl object-cover" alt="profile" />
                   ) : (
-                    getInitials(user.name || user.fullName)
+                    user.name?.[0] || "U"
                   )}
                 </div>
+                <ChevronDown size={14} className={`text-slate-400 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
               </button>
 
               {/* User Dropdown */}
               {showDropdown && (
-                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-900 rounded-xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 overflow-hidden transform origin-top-right transition-all">
-                  <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/50">
-                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Signed in as</p>
-                    <p className="text-sm font-bold text-gray-900 dark:text-white truncate mt-1">{user.email}</p>
-                    {user.role === "astrologer" && (
-                       <span className="inline-block mt-2 px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300 rounded-full">
-                         Astrologer
-                       </span>
-                    )}
+                <div className="absolute right-0 mt-3 w-72 bg-[#0f172a] rounded-[2rem] shadow-2xl border border-white/5 overflow-hidden animate-in fade-in zoom-in duration-200">
+                  <div className="p-6 border-b border-white/5 bg-slate-800/30">
+                    <p className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em]">Celestial Member</p>
+                    <p className="text-sm font-bold text-white truncate mt-1">{user.email}</p>
                   </div>
 
-                  <div className="py-2">
-                    {[
-                      { name: 'Dashboard', link: user.role === "astrologer" ? "/astrologer/dashboard" : "/dashboard" },
-                      { name: 'Profile & Settings', link: "/profile" },
-                      { name: 'My Readings', link: "/my-readings" }
-                    ].map((item) => (
-                      <Link 
-                        key={item.name}
-                        to={item.link} 
-                        className="block px-6 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
-                      >
-                        {item.name}
-                      </Link>
-                    ))}
+                  <div className="p-3 space-y-1">
+                    <DropdownLink to="/dashboard" icon={<LayoutDashboard size={16} />} label="My Dashboard" />
+                    <DropdownLink to="/profile" icon={<UserCircle size={16} />} label="Astro Profile" />
+                    <DropdownLink to="/settings" icon={<Settings size={16} />} label="Preferences" />
                   </div>
 
-                  <div className="border-t border-gray-100 dark:border-slate-800 p-2">
+                  <div className="p-3 border-t border-white/5 bg-white/5">
                     <button
                       onClick={handleLogout}
-                      className="w-full text-left px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-500/10 rounded-2xl transition-all"
                     >
-                      Sign Out
+                      <LogOut size={16} /> Sign Out
                     </button>
                   </div>
                 </div>
               )}
             </div>
           ) : (
-            <div className="hidden md:flex items-center gap-4">
-              <Link to="/login" className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition">
+            <div className="hidden md:flex items-center gap-3">
+              <Link to="/login" className="px-5 py-2.5 text-xs font-black uppercase tracking-widest text-slate-300 hover:text-amber-500 transition">
                 Log in
               </Link>
-              <Link
-                to="/register"
-                className="px-5 py-2.5 text-sm font-semibold text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-full hover:bg-gray-800 dark:hover:bg-gray-200 transition shadow-lg shadow-gray-900/20 dark:shadow-white/10"
-              >
-                Get Started
+              <Link to="/register" className="px-6 py-2.5 text-xs font-black uppercase tracking-widest text-slate-900 bg-amber-500 rounded-xl hover:scale-105 transition shadow-lg shadow-amber-500/20">
+                Join Now
               </Link>
             </div>
           )}
 
           {/* Mobile Menu Button */}
-          <button className="md:hidden p-2 text-gray-600 dark:text-gray-300" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            {mobileMenuOpen ? <XIcon /> : <Menu />}
+          <button
+            className="lg:hidden p-2.5 rounded-xl bg-slate-900 text-slate-300"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? <XIcon size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </div>
-      
-      {/* Mobile Menu (Simplified) */}
+
+      {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-4 space-y-4">
-           {/* Add mobile links here matching desktop */}
-           <Link to="/login" className="block w-full text-center py-2 border border-gray-300 dark:border-slate-700 rounded-lg">Login</Link>
-           <Link to="/register" className="block w-full text-center py-2 bg-amber-500 text-white rounded-lg">Register</Link>
+        <div className="lg:hidden border-t border-white/5 bg-[#020617] p-6 space-y-4 animate-in slide-in-from-top duration-300">
+          {navItems.map((item) => (
+            <Link key={item.name} to={item.link} className="block text-sm font-bold uppercase tracking-widest text-slate-300">
+              {item.name}
+            </Link>
+          ))}
+          <hr className="border-white/5" />
+          <Link to="/login" className="block text-center py-4 font-black uppercase tracking-widest text-sm text-slate-400">Login</Link>
+          <Link to="/register" className="block text-center py-4 bg-amber-500 text-slate-900 font-black uppercase tracking-widest rounded-2xl text-sm">Get Started</Link>
         </div>
       )}
     </nav>
   );
 };
+
+const DropdownLink = ({ to, icon, label }) => (
+  <Link
+    to={to}
+    className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-400 hover:bg-white/5 hover:text-amber-400 rounded-2xl transition-all"
+  >
+    {icon} {label}
+  </Link>
+);
 
 export default Navbar;

@@ -1,16 +1,26 @@
-/* --- START OF ADDED TAILWIND DIRECTIVES --- */
 @import "tailwindcss";
-/* --- END OF ADDED TAILWIND DIRECTIVES --- */
 
-:root {
-  font-family: Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@layer base {
+  :root {
+    /* Set dark mode colors as the default */
+    --background: #020617; /* Deep Midnight */
+    --foreground: #f8fafc; /* Slate 50 */
+  }
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  /* ... rest of your :root styles */
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    /* We keep the transition for smooth component loading */
+    @apply transition-colors duration-500 ease-in-out;
+  }
 }
 
+/* Force dark styling on external components like Slick Carousel */
+.slick-dots li button:before {
+  color: #f59e0b !important; /* Amber-500 */
+}
+
+/* Custom glow effect for headings */
+.text-glow {
+  text-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+}

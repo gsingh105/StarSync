@@ -122,16 +122,7 @@ export default function Profile() {
                     </div>
                   </div>
 
-                  {/* User ID */}
-                  <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
-                    <div className="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm">
-                       <Shield className="h-5 w-5 text-amber-500" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">User ID</p>
-                      <p className="text-sm font-mono font-medium text-slate-600 dark:text-slate-300">{user?._id || 'N/A'}</p>
-                    </div>
-                  </div>
+                
 
                   {/* Date Joined */}
                   {user?.createdAt && (

@@ -36,27 +36,27 @@ export const generateKundli = async (req, res) => {
             // 3. CRITICAL: Save/Update to your Database
             const savedKundli = await KundliModel.findOneAndUpdate(
                 { userId },
-                { 
+                {
                     userId,
                     dob: formattedDob,
                     tob: formattedTob,
                     place,
                     lat: latitude,
-                    lon: longitude, 
-                    chartData: response.data.response 
+                    lon: longitude,
+                    chartData: response.data.response
                 },
                 { upsert: true, new: true }
             );
 
             // 4. SEND RESPONSE BACK (This stops the "Aligning Stars" spinner)
-            return res.status(200).json({ 
-                success: true, 
-                data: savedKundli.chartData 
+            return res.status(200).json({
+                success: true,
+                data: savedKundli.chartData
             });
         } else {
-            return res.status(400).json({ 
-                success: false, 
-                message: response.data.msg || "External API Error" 
+            return res.status(400).json({
+                success: false,
+                message: response.data.msg || "External API Error"
             });
         }
 
@@ -71,7 +71,7 @@ export const getSavedKundli = async (req, res) => {
     try {
         const kundli = await KundliModel.findOne({ userId: req.user.id });
         if (!kundli) return res.json({ success: true, data: null });
-        
+
         res.status(200).json({ success: true, data: kundli.chartData });
     } catch (error) {
         res.status(500).json({ success: false });
@@ -85,5 +85,106 @@ export const deleteKundli = async (req, res) => {
         res.json({ success: true, message: "Kundli deleted" });
     } catch (error) {
         res.status(500).json({ success: false });
+    }
+};
+
+export const getDailyHoroscope = async (req, res) => {
+    try {
+        const userId = req.user._id || req.user.id;
+
+        // 1. Get the user's saved Rasi from the database
+        const kundli = await KundliModel.findOne({ userId });
+        if (!kundli) {
+            return res.status(404).json({ success: false, message: "Please generate your Kundli first." });
+        }
+
+        const rasi = kundli.chartData.rasi; // e.g., "Scorpio"
+
+        // Map Rasi names to IDs if your API requires numbers (Leo=5, etc.)
+        const rasiMap = {
+            "Aries": 1, "Taurus": 2, "Gemini": 3, "Cancer": 4,
+            "Leo": 5, "Virgo": 6, "Libra": 7, "Scorpio": 8,
+            "Sagittarius": 9, "Capricorn": 10, "Aquarius": 11, "Pisces": 12
+        };
+
+        // 2. Fetch Prediction from API
+        // For "Next Day", we calculate tomorrow's date
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        const pad = (n) => n.toString().padStart(2, '0');
+        const formattedDate = `${pad(tomorrow.getDate())}/${pad(tomorrow.getMonth() + 1)}/${tomorrow.getFullYear()}`;
+
+        const response = await axios.get('https://api.vedicastroapi.com/v3-json/prediction/daily-sun', {
+            params: {
+                zodiac: rasiMap[rasi],
+                date: formattedDate,
+                api_key: process.env.ASTRO_API_KEY,
+                lang: 'en',
+                split: true,
+                type: 'big'
+            }
+        });
+
+        res.status(200).json({
+            success: true,
+            zodiac: rasi,
+            date: formattedDate,
+            prediction: response.data.response
+        });
+
+    } catch (error) {
+        console.error("Horoscope Error:", error.message);
+        res.status(500).json({ success: false, message: "Failed to fetch horoscope" });
+    }
+};
+
+export const getMatchingResult = async (req, res) => {
+    try {
+        const { p1, p2 } = req.body;
+        const api_key = process.env.ASTRO_API_KEY;
+
+        // 1. Fetch Ashtakoot (Guna) Matching
+        // URL checked for V3 accuracy
+        const gunaRes = await axios.get('https://api.vedicastroapi.com/v3-json/matching/ashtakoot', {
+            params: {
+                boy_dob: p1.dob, boy_tob: p1.tob, boy_lat: p1.lat, boy_lon: p1.lon, boy_tz: p1.tz,
+                girl_dob: p2.dob, girl_tob: p2.tob, girl_lat: p2.lat, girl_lon: p2.lon, girl_tz: p2.tz,
+                api_key, lang: 'en'
+            }
+        });
+
+        // 2. Fetch Manglik Status (Wrapped in try/catch to prevent total crash)
+        let manglikData = { p1: { is_manglik: false }, p2: { is_manglik: false } };
+        try {
+            const [boyManglik, girlManglik] = await Promise.all([
+                axios.get('https://api.vedicastroapi.com/v3-json/horoscope/manglik', {
+                    params: { dob: p1.dob, tob: p1.tob, lat: p1.lat, lon: p1.lon, tz: p1.tz, api_key, lang: 'en' }
+                }),
+                axios.get('https://api.vedicastroapi.com/v3-json/horoscope/manglik', {
+                    params: { dob: p2.dob, tob: p2.tob, lat: p2.lat, lon: p2.lon, tz: p2.tz, api_key, lang: 'en' }
+                })
+            ]);
+            manglikData.p1 = boyManglik.data.response;
+            manglikData.p2 = girlManglik.data.response;
+        } catch (mErr) {
+            console.warn("Manglik API failed, but continuing with Guna results.");
+        }
+
+        res.status(200).json({
+            success: true,
+            response: {
+                guna: gunaRes.data.response,
+                manglik: manglikData
+            }
+        });
+    } catch (error) {
+        console.error("MATCHING CRITICAL ERROR:", error.response?.data || error.message);
+        res.status(500).json({
+            success: false,
+            message: "Astrology API Error",
+            error: error.response?.data?.msg || error.message
+        });
     }
 };

@@ -94,9 +94,9 @@ const AstrologerDashboard = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#050505] text-slate-900 dark:text-gray-100 font-sans">
+        <div className="min-h-screen bg-slate-900 text-slate-900 dark:text-gray-100 font-sans">
             {/* --- Top Navigation --- */}
-            <header className="sticky top-0 z-40 bg-white/70 dark:bg-black/70 backdrop-blur-xl border-b dark:border-white/10 px-6 py-4">
+            <header className="sticky top-0 z-40 bg-slate-900 backdrop-blur-xl border-b dark:border-white/10 px-6 py-4">
                 <div className="max-w-7xl mx-auto flex justify-between items-center">
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center">
@@ -140,7 +140,7 @@ const AstrologerDashboard = () => {
                 <div className="grid lg:grid-cols-3 gap-6">
                     {/* --- Center Stage: Call Handling --- */}
                     <div className="lg:col-span-2 space-y-6">
-                        <div className="relative overflow-hidden bg-white dark:bg-[#0A0A0A] rounded-[2.5rem] border dark:border-white/5 p-12 flex flex-col items-center justify-center min-h-[450px] shadow-sm">
+                        <div className="relative overflow-hidden bg-zinc-800 rounded-[2.5rem] border dark:border-white/5 p-12 flex flex-col items-center justify-center min-h-[450px] shadow-sm">
                             {/* Decorative Background */}
                             <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 blur-[100px] -mr-32 -mt-32"></div>
 
@@ -173,7 +173,7 @@ const AstrologerDashboard = () => {
                         </div>
 
                         {/* --- Recent Reviews Section --- */}
-                        <div className="bg-white dark:bg-[#0A0A0A] rounded-[2.5rem] border dark:border-white/5 p-8 shadow-sm">
+                        <div className="bg-zinc-800 rounded-[2.5rem] border dark:border-white/5 p-8 shadow-sm">
                             <div className="flex items-center justify-between mb-6">
                                 <h3 className="text-lg font-black flex items-center gap-2">
                                     <MessageSquare size={18} className="text-amber-500" /> Recent Feedback
@@ -197,7 +197,7 @@ const AstrologerDashboard = () => {
 
                     {/* --- Side Profile Info --- */}
                     <div className="space-y-6">
-                        <div className="bg-white dark:bg-[#0A0A0A] rounded-[2.5rem] border dark:border-white/5 p-8 text-center shadow-sm">
+                        <div className="bg-zinc-800 rounded-[2.5rem] border dark:border-white/5 p-8 text-center shadow-sm">
                             <div className="w-28 h-28 bg-gradient-to-tr from-amber-500 to-orange-400 rounded-full mx-auto mb-6 p-1">
                                 <div className="w-full h-full rounded-full bg-white dark:bg-black overflow-hidden border-4 border-white dark:border-[#0A0A0A]">
                                     <img src={astrologer?.profileImage} className="w-full h-full object-cover" alt="profile" />
@@ -227,7 +227,7 @@ const AstrologerDashboard = () => {
 
 // --- Helper Components ---
 const StatCard = ({ icon, label, value, color }) => (
-    <div className="bg-white dark:bg-[#0A0A0A] p-5 rounded-3xl border dark:border-white/5 shadow-sm">
+    <div className="bg-zinc-800 p-5 rounded-3xl border dark:border-white/5 shadow-sm">
         <div className="flex items-center gap-4">
             <div className={`p-3 rounded-2xl bg-slate-50 dark:bg-white/5 ${color}`}>
                 {icon}

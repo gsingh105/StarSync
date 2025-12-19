@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { ShieldCheck, User, Lock, Activity, ArrowLeft, Eye, EyeOff } from 'lucide-react'
+import { ShieldCheck, User, Lock, Activity, ArrowLeft, Eye, EyeOff, Sparkles } from 'lucide-react'
 import { useAstrologerAuth } from '../../context/AstrologerAuthContext'
 
 const AstrologerLogin = () => {
@@ -18,6 +18,7 @@ const AstrologerLogin = () => {
     setError('')
     setIsLoading(true)
 
+    // Maintaining your specific passkey logic
     if (password !== '123456') {
       setError('Invalid Passkey. Access Denied.')
       setIsLoading(false)
@@ -28,83 +29,107 @@ const AstrologerLogin = () => {
       await login(email)
       navigate('/astrologer/dashboard')
     } catch (err) {
-      setError(typeof err === 'string' ? err : 'Login failed. Please check your email.')
+      setError(typeof err === 'string' ? err : 'Login failed. Please check your credentials.')
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex justify-center items-center bg-gray-100 px-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-md border p-8 relative">
-        <Link to="/" className="absolute top-4 left-4 text-gray-500 hover:text-slate-600 transition-colors">
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
+    <div className="min-h-screen flex justify-center items-center bg-[#01040a] px-6 relative overflow-hidden font-sans">
+      
+      {/* Ambient Cosmic Background */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[600px] bg-orange-600/10 rounded-full blur-[120px]"></div>
+      </div>
 
-        <div className="flex justify-center mb-6">
-          <div className="w-16 h-16 rounded-full flex items-center justify-center bg-slate-100 border border-slate-200 shadow">
-            <ShieldCheck className="w-8 h-8 text-slate-600" />
+      <div className="w-full max-w-md relative z-10 animate-in fade-in zoom-in duration-700">
+        
+        {/* Glassmorphic Card */}
+        <div className="bg-slate-900/40 backdrop-blur-xl rounded-[2.5rem] border border-white/5 p-10 md:p-12 shadow-2xl relative overflow-hidden">
+          
+          <Link to="/" className="absolute top-8 left-8 text-slate-500 hover:text-amber-500 transition-colors">
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+
+          <div className="flex flex-col items-center mb-10">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-br from-amber-500 to-orange-600 shadow-xl shadow-amber-500/20 mb-6 group">
+              <ShieldCheck className="w-8 h-8 text-white group-hover:scale-110 transition-transform" />
+            </div>
+            <h2 className="text-3xl font-black text-white text-center tracking-tighter uppercase mb-2">Partner <span className="text-amber-500">Portal</span></h2>
+            <div className="flex items-center gap-2 text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] italic">
+               <Sparkles size={12} className="text-amber-500" /> Sanctum for Verified Masters
+            </div>
+          </div>
+
+          {error && (
+            <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl flex items-center gap-3 text-xs font-bold uppercase tracking-wider animate-shake">
+              <Activity className="w-4 h-4 shrink-0" /> {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Email Address */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Email Address</label>
+              <div className="relative group">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-amber-500 transition-colors" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="master@starsync.com"
+                  required
+                  className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-slate-600 focus:outline-none focus:border-amber-500/50 transition-all font-medium text-sm"
+                />
+              </div>
+            </div>
+
+            {/* Passkey */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Passkey</label>
+              <div className="relative group">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-amber-500 transition-colors" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••"
+                  required
+                  className="w-full pl-12 pr-12 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-slate-600 focus:outline-none focus:border-amber-500/50 transition-all font-medium text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-amber-500 text-slate-950 font-black uppercase tracking-widest text-xs py-5 rounded-2xl shadow-xl shadow-amber-500/10 hover:bg-amber-400 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-4 flex items-center justify-center gap-2"
+            >
+              {isLoading ? (
+                <div className="w-5 h-5 border-2 border-slate-950/20 border-t-slate-950 rounded-full animate-spin"></div>
+              ) : (
+                'Enter Sanctum'
+              )}
+            </button>
+          </form>
+
+          {/* Security Footer */}
+          <div className="mt-10 text-center">
+            <p className="text-slate-600 text-[9px] font-black uppercase tracking-[0.3em]">
+              Authorized Personnel Only
+            </p>
           </div>
         </div>
-
-        <h2 className="text-2xl font-semibold text-gray-800 text-center mb-1">Partner Portal</h2>
-        <p className="text-gray-500 text-center text-sm mb-6 italic">Enter the sanctum for verified masters</p>
-
-        {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-600 rounded flex items-center gap-2">
-            <Activity className="w-4 h-4" /> {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Email */}
-          <div>
-            <label className="block text-sm text-gray-700 font-medium mb-1">Email Address</label>
-            <div className="relative">
-              <User className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                required
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-slate-500 focus:outline-none text-gray-700"
-              />
-            </div>
-          </div>
-
-          {/* Passkey */}
-          <div>
-            <label className="block text-sm text-gray-700 font-medium mb-1">Passkey</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your passkey"
-                required
-                className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-slate-500 focus:outline-none text-gray-700"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-gray-400 hover:text-gray-700 transition"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-slate-900 hover:to-slate-600 text-white font-semibold py-3 rounded-md shadow transition disabled:opacity-50 disabled:cursor-not-allowed mt-2"
-          >
-            {isLoading ? 'Verifying...' : 'Enter Sanctum'}
-          </button>
-        </form>
       </div>
     </div>
   )
