@@ -67,19 +67,18 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route element={<MainLayout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } />
+  <Route path="/" element={<Home />} />
+  <Route path="/astrologers" element={<Dashboard />} />
 
-
-            <Route path='/kundli' element={<KundliPage />} />
-            <Route path="/horoscope" element={<DailyHoroscope />} />
-            <Route path="/compatibility" element={<MatchingPage />} />
-            <Route path='*' element={<NotFound />} />
-          </Route>
+  {/* Wrap nested routes - removed the 'isAuthenticated' prop since the component uses useAuth() */}
+  <Route element={<ProtectedRoute />}>
+    <Route path="/kundli" element={<KundliPage />} />
+    <Route path="/horoscope" element={<DailyHoroscope />} />
+    <Route path="/compatibility" element={<MatchingPage />} />
+  </Route>
+  
+  <Route path='*' element={<NotFound />} />
+</Route>
 
 
 

@@ -25,10 +25,8 @@ const Navbar = () => {
 
   const navItems = [
     { name: 'Horoscope', link: '/horoscope' },
-    { name: 'Next Day', link: '/horoscope/next-day' },
     { name: 'Kundli', link: '/kundli' },
     { name: 'Matching', link: '/compatibility' },
-    { name: 'Panchang', link: '/panchang' }
   ];
 
   return (
@@ -91,9 +89,7 @@ const Navbar = () => {
                   </div>
 
                   <div className="p-3 space-y-1">
-                    <DropdownLink to="/dashboard" icon={<LayoutDashboard size={16} />} label="My Dashboard" />
-                    <DropdownLink to="/profile" icon={<UserCircle size={16} />} label="Astro Profile" />
-                    <DropdownLink to="/settings" icon={<Settings size={16} />} label="Preferences" />
+                    <DropdownLink to="/profile" icon={<UserCircle size={16} />} label="Profile" />
                   </div>
 
                   <div className="p-3 border-t border-white/5 bg-white/5">
