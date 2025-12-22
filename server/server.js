@@ -4,13 +4,12 @@ dotenv.config();
 import { createServer } from "http";
 import { Server } from "socket.io";
 import connectDB from "./src/config/db.config.js";
-import app from "./src/app.js"; // Import the configured express app
-import { setupSocketIO } from "./src/sockets/socketManager.js"; // Import socket logic
+import app from "./src/app.js";
+import { setupSocketIO } from "./src/sockets/socketManager.js"; 
 
 const PORT = process.env.PORT || 8000;
 const httpServer = createServer(app);
 
-// Initialize Socket.IO
 const io = new Server(httpServer, {
     cors: {
         origin: [
@@ -22,10 +21,9 @@ const io = new Server(httpServer, {
     }
 });
 
-// Attach Socket Logic
+
 setupSocketIO(io);
 
-// Start Server
 const startServer = async () => {
     try {
         await connectDB();

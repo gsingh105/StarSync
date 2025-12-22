@@ -34,7 +34,9 @@ export default function Login() {
     setApiError('');
     try {
       await login(data);
-      navigate('/dashboard');
+      navigate('/astrologers');
+      // toast.success('Welcome back! Login successful.');
+
     } catch (error) {
       setApiError(error.response?.data?.message || 'Invalid credentials. Please try again.');
     } finally {
@@ -47,7 +49,7 @@ export default function Login() {
       try {
         setLoading(true);
         await googleLogin(tokenResponse.access_token);
-        navigate('/dashboard');
+        navigate('/astrologers');
       } catch {
         setApiError('Google Sign-in failed. Please try again.');
       } finally {
@@ -59,7 +61,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 px-6 py-12 relative overflow-hidden transition-colors duration-500 font-sans">
-      
+
       {/* Background Ambience */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[100px]"></div>
@@ -68,11 +70,11 @@ export default function Login() {
 
       <div className="relative z-10 w-full max-w-md">
         <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl p-8 md:p-10">
-          
+
           {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-xl mb-4 text-amber-600 dark:text-amber-400">
-               <Sparkles size={24} />
+              <Sparkles size={24} />
             </div>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white mt-2">Welcome Back</h1>
             <p className="text-slate-500 dark:text-slate-400 mt-2">Login to access your cosmic dashboard</p>
@@ -87,7 +89,7 @@ export default function Login() {
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            
+
             {/* Email */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Email Address</label>
@@ -97,11 +99,10 @@ export default function Login() {
                   type="email"
                   placeholder="you@example.com"
                   {...register('email')}
-                  className={`w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition-all ${
-                    errors.email 
-                      ? 'border-red-500 focus:border-red-500' 
+                  className={`w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition-all ${errors.email
+                      ? 'border-red-500 focus:border-red-500'
                       : 'border-slate-200 dark:border-slate-700 focus:border-amber-500'
-                  }`}
+                    }`}
                 />
               </div>
               {errors.email && <p className="text-xs text-red-500 font-medium">{errors.email.message}</p>}
@@ -116,11 +117,10 @@ export default function Login() {
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Enter your password"
                   {...register('password')}
-                  className={`w-full pl-12 pr-12 py-3.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition-all ${
-                    errors.password 
-                      ? 'border-red-500 focus:border-red-500' 
+                  className={`w-full pl-12 pr-12 py-3.5 bg-slate-50 dark:bg-slate-800 border rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition-all ${errors.password
+                      ? 'border-red-500 focus:border-red-500'
                       : 'border-slate-200 dark:border-slate-700 focus:border-amber-500'
-                  }`}
+                    }`}
                 />
                 <button
                   type="button"

@@ -13,10 +13,6 @@ const registerSchema = z.object({
   fullName: z.string().min(3, 'Name must be at least 3 characters'),
   email: z.string().email('Invalid email format'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  confirmPassword: z.string()
-}).refine((data) => data.password === data.confirmPassword, {
-  message: 'Passwords do not match',
-  path: ['confirmPassword']
 })
 
 export default function Register() {
@@ -47,7 +43,7 @@ export default function Register() {
         password: data.password
       })
       
-      navigate('/dashboard')
+      navigate('/astrologers')
     } catch (error) {
       console.error("Registration Failed:", error.response || error); // Debug log
       setApiError(error.response?.data?.message || 'Registration failed. Please check your network.')
@@ -61,7 +57,7 @@ export default function Register() {
       try {
         setLoading(true)
         await googleLogin(tokenResponse.access_token)
-        navigate('/dashboard')
+        navigate('/astrologers')
       } catch (error) {
         setApiError('Google Sign-in failed.')
       } finally {
@@ -149,22 +145,7 @@ export default function Register() {
             {errors.password && <p className="text-xs text-red-500 font-medium">{errors.password.message}</p>}
           </div>
 
-           {/* Confirm Password */}
-           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Confirm Password</label>
-            <div className="relative group">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-amber-500 transition-colors" />
-              <input type={showPassword ? 'text' : 'password'} placeholder="••••••••"
-                {...register('confirmPassword')}
-                className={`w-full pl-12 pr-12 py-3 rounded-xl border bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-amber-500/10 transition-all ${
-                  errors.confirmPassword 
-                    ? 'border-red-500 focus:border-red-500' 
-                    : 'border-slate-200 dark:border-slate-700 focus:border-amber-500'
-                }`}
-              />
-            </div>
-            {errors.confirmPassword && <p className="text-xs text-red-500 font-medium">{errors.confirmPassword.message}</p>}
-          </div>
+          
 
           {/* Error Message */}
           {apiError &&

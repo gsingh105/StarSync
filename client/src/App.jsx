@@ -1,42 +1,38 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Outlet, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 
-// Contexts
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AstrologerAuthProvider } from './context/AstrologerAuthContext';
-
-// Components
-import Navbar from './components/common/Navbar'; // Import Navbar
-import Footer from './components/common/Footer'; // Import Footer
-
-// User Pages
-import Login from './components/auth/Login';
-import Register from './components/auth/Register';
-import Dashboard from './pages/Dashboard';
-import Profile from './components/auth/Profile';
-import Home from './pages/Home';
+import Navbar from './components/common/Navbar';
+import Footer from './components/common/Footer';
 import ProtectedRoute from './components/auth/ProtectedRoute';
-import ForgotPassword from './components/auth/ForgotPassword';
-import ResetPassword from './components/auth/ResetPassword';
 
-// Astrologer Pages
-import AstrologerLogin from './components/astrologer/AstrologerLogin';
-import AstrologerDashboard from './pages/astrologer/AstrologerDashboard';
-import NotFound from './pages/NotFound';
+const Home = lazy(() => import('./pages/Home'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Profile = lazy(() => import('./components/auth/Profile'));
+const Login = lazy(() => import('./components/auth/Login'));
+const Register = lazy(() => import('./components/auth/Register'));
+const ForgotPassword = lazy(() => import('./components/auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('./components/auth/ResetPassword'));
 
-// Admin Pages
-import AdminDashboard from './pages/admin/AdminDashboard';
-import KundliPage from './pages/KundliPage';
-import DailyHoroscope from './pages/DailyHoroscope';
-import MatchingPage from './pages/MatchingPage';
+
+const KundliPage = lazy(() => import('./pages/KundliPage'));
+const DailyHoroscope = lazy(() => import('./pages/DailyHoroscope'));
+const MatchingPage = lazy(() => import('./pages/MatchingPage'));
+
+
+const AstrologerLogin = lazy(() => import('./components/astrologer/AstrologerLogin'));
+const AstrologerDashboard = lazy(() => import('./pages/astrologer/AstrologerDashboard'));
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 
 const MainLayout = () => {
   return (
-    // Remove bg-black here so it follows the body background
     <div className="flex flex-col min-h-screen bg-transparent">
       <Navbar />
-      <main className="grow "> {/* Removed bg-black */}
+      <main className="grow">
         <Outlet />
       </main>
       <Footer />
@@ -59,51 +55,59 @@ const AdminRoute = () => {
   return <Outlet />;
 };
 
-// --- APP ---
+
+const PageLoader = () => (
+  <div className="h-screen w-full flex items-center justify-center bg-transparent">
+    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+  </div>
+);
+
+
 
 function App() {
   return (
     <AuthProvider>
+      <Toaster position="top-right" reverseOrder={false} />
       <BrowserRouter>
-        <Routes>
-          <Route element={<MainLayout />}>
-  <Route path="/" element={<Home />} />
-  <Route path="/astrologers" element={<Dashboard />} />
+        {/* Suspense handles the loading state while the lazy components are being fetched */}
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
 
-  {/* Wrap nested routes - removed the 'isAuthenticated' prop since the component uses useAuth() */}
-  <Route element={<ProtectedRoute />}>
-    <Route path="/kundli" element={<KundliPage />} />
-    <Route path="/horoscope" element={<DailyHoroscope />} />
-    <Route path="/compatibility" element={<MatchingPage />} />
-  </Route>
-  
-  <Route path='*' element={<NotFound />} />
-</Route>
+            {/* Main Layout Routes */}
+            <Route element={<MainLayout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/astrologers" element={<Dashboard />} />
 
+              {/* Protected User Routes */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/kundli" element={<KundliPage />} />
+                <Route path="/horoscope" element={<DailyHoroscope />} />
+                <Route path="/compatibility" element={<MatchingPage />} />
+                <Route path="/profile" element={<Profile />} />
+              </Route>
 
+              <Route path='*' element={<NotFound />} />
+            </Route>
 
-          <Route element={<AstrologerLayout />}>
-            <Route path="/astrologer/login" element={<AstrologerLogin />} />
-            <Route path="/astrologer/dashboard" element={<AstrologerDashboard />} />
-          </Route>
+            {/* Astrologer Routes */}
+            <Route element={<AstrologerLayout />}>
+              <Route path="/astrologer/login" element={<AstrologerLogin />} />
+              <Route path="/astrologer/dashboard" element={<AstrologerDashboard />} />
+            </Route>
 
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
+            {/* Auth Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
 
+            {/* Admin Routes */}
+            <Route element={<AdminRoute />}>
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            </Route>
 
-          <Route element={<AdminRoute />}>
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          </Route>
-
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/profile" element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          } />
-
-        </Routes>
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </AuthProvider>
   );

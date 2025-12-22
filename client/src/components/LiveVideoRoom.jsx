@@ -18,7 +18,7 @@ export default function LiveVideoRoom({ token, onEndCall }) {
 
   const isTokenString = typeof validToken === 'string' && validToken.length > 0;
 
-  // 2. Error UI
+
   if (!isTokenString) {
       return (
           <div className="h-screen bg-black flex flex-col items-center justify-center text-white gap-4">
@@ -39,7 +39,6 @@ export default function LiveVideoRoom({ token, onEndCall }) {
       )
   }
 
-  // 3. Handle LiveKit Errors (e.g. Camera locked)
   const handleError = (error) => {
     console.error("LiveKit Error:", error);
     if (error.message?.includes("Device in use") || error.name === "NotReadableError") {

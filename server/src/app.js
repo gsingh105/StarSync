@@ -1,10 +1,9 @@
-// src/app.js
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { errorHandler } from "./utils/errorHanlder.js";
 
-// Routes
+
 import userRoutes from "./routes/auth.routes.js";
 import astrologerRoutes from "./routes/astrologer.routes.js";
 import sessionRoutes from "./routes/session.routes.js";
@@ -15,13 +14,13 @@ import kundliRoutes from "./routes/kundli.routes.js"
 
 const app = express();
 
-// Allowed Origins
+
 const allowedOrigins = [
     "http://localhost:5173", 
     "http://localhost:3000"
 ];
 
-// Middleware
+
 app.use(cors({
     origin: allowedOrigins,
     credentials: true,
@@ -33,7 +32,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
 
-// Routes
 app.use("/api/auth", userRoutes);
 app.use("/api/astrologer", astrologerRoutes);
 app.use("/session", sessionRoutes);
@@ -42,7 +40,6 @@ app.use("/api/call", callRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/kundli",kundliRoutes)
 
-// Error Handler (Always last)
 app.use(errorHandler);
 
 export default app;
