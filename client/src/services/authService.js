@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-// Ensure VITE_API_URL is set in your .env file
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const api = axios.create({
@@ -11,7 +10,6 @@ const api = axios.create({
   }
 });
 
-// Response interceptor for global error handling
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -20,10 +18,8 @@ api.interceptors.response.use(
 );
 
 const authService = {
-
   register: async (userData) => {
     const response = await api.post('/register', {
-      // Send both to be safe, backend will ignore the extra one
       name: userData.fullName,
       fullName: userData.fullName,
       email: userData.email,

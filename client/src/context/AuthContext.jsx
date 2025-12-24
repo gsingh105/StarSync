@@ -30,6 +30,7 @@ export const AuthProvider = ({ children }) => {
       } catch (error) {
         setUser(null);
         setIsAuthenticated(false);
+        console.log(error)
       } finally {
         setLoading(false);
       }

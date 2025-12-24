@@ -11,7 +11,7 @@ export const setupSocketIO = (io) => {
         socket.on("register", (userId) => {
             if (userId) {
                 onlineUsers.set(userId, socket.id);
-                console.log(`User ${userId} registered.`);
+                // console.log(`User ${userId} registered.`);
             }
         });
 
@@ -47,7 +47,6 @@ export const setupSocketIO = (io) => {
                     return;
                 }
 
-                // PAY-ON-CONNECT: Deduct only now
                 user.walletBalance -= totalCost;
                 await user.save();
 

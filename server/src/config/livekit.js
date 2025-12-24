@@ -3,7 +3,6 @@ import dotenv from "dotenv";
 dotenv.config();
 
 export const createToken = async (identity, room, name) => {
-  // Fallback: If name is undefined, use identity or "User"
   const displayName = name || identity || "User";
   // console.log(`Generating Token for: ${identity} | Name: ${displayName}`);
 
@@ -12,11 +11,10 @@ export const createToken = async (identity, room, name) => {
     process.env.LIVEKIT_API_SECRET,
     { 
       identity,
-      name: displayName // <--- LiveKit Video UI uses this
+      name: displayName 
     }
   );
   
-  // Method 2: Force set property (for older SDK versions)
   at.name = displayName; 
 
   at.addGrant({

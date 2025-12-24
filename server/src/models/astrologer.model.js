@@ -14,7 +14,6 @@ const astrologerSchema = new mongoose.Schema(
     phone: {
       type: String,
       required: true,
-      // unique: true
     },
     specialization: {
       type: String,
@@ -43,7 +42,7 @@ const astrologerSchema = new mongoose.Schema(
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin", // Logged in admin 
+      ref: "auth", 
       required: true
     }
   },

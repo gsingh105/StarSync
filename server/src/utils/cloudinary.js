@@ -1,5 +1,5 @@
 import { v2 as cloudinary } from 'cloudinary';
-import { Readable } from 'stream'; // Native Node.js module
+import { Readable } from 'stream'; 
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -10,10 +10,8 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Helper function to upload from buffer (Memory)
 const uploadFromBuffer = async (buffer) => {
     return new Promise((resolve, reject) => {
-        // Create a stream to Cloudinary
         const stream = cloudinary.uploader.upload_stream(
             { resource_type: "auto" },
             (error, result) => {
@@ -21,8 +19,6 @@ const uploadFromBuffer = async (buffer) => {
                 resolve(result);
             }
         );
-
-        // Convert the buffer to a readable stream and pipe it to Cloudinary
         Readable.from(buffer).pipe(stream);
     });
 };

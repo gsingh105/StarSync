@@ -5,7 +5,7 @@ import { authMiddleware } from '../middlewares/autMiddleware.js';
 const router = express.Router();
 
 router.post('/generate', authMiddleware, generateKundli);
-router.get('/saved', authMiddleware, getSavedKundli); // Called on page refresh
+router.get('/saved', authMiddleware, getSavedKundli); 
 router.delete('/delete', authMiddleware, deleteKundli);
 router.get('/horoscope', authMiddleware, getDailyHoroscope)
 router.post('/matching', authMiddleware, getMatchingResult);

@@ -3,18 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Phone, Star, Sparkles, Wallet, X, Clock, Plus, Zap, Heart } from 'lucide-react';
 import axios from 'axios';
 
-// Services & Context
 import astrologerService from '../services/astrologerService';
 import authService from '../services/authService';
 import { useAuth } from '../context/AuthContext';
 import socketService from '../services/socketService';
 
-// Components
 import LiveVideoRoom from '../components/LiveVideoRoom';
-import Navbar from '../components/common/Navbar';
 import WalletModal from '../components/auth/WalletModal';
 import InsufficientBalanceModal from '../components/auth/InsufficientBalanceModal';
 import RatingModal from '../components/auth/RatingModal';
+import { toast } from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -22,30 +20,29 @@ export default function Dashboard() {
     const { user, setUser } = useAuth();
     const navigate = useNavigate();
 
-    // Data States
     const [astrologers, setAstrologers] = useState([]);
     const [filteredAstrologers, setFilteredAstrologers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // UI & Filter States
+
     const [searchTerm, setSearchTerm] = useState('');
     const [specializationFilter, setSpecializationFilter] = useState('All');
 
-    // Call Flow States
+
     const [callStatus, setCallStatus] = useState('idle');
     const [liveToken, setLiveToken] = useState(null);
     const [targetAstrologer, setTargetAstrologer] = useState(null);
     const [showDurationModal, setShowDurationModal] = useState(false);
     const [selectedMinutes, setSelectedMinutes] = useState(5);
 
-    // Modal & Rating States
+
     const [showRechargeModal, setShowRechargeModal] = useState(false);
     const [showInsufficientModal, setShowInsufficientModal] = useState(false);
     const [showRatingModal, setShowRatingModal] = useState(false);
     const [neededAmount, setNeededAmount] = useState(0);
 
-    // 1. Sync Wallet from Backend
+
     const fetchUserData = async () => {
         try {
             const updatedUser = await authService.checkAuth();
@@ -94,7 +91,13 @@ export default function Dashboard() {
 
     const handleConfirmDuration = async () => {
         const mins = parseInt(selectedMinutes);
-        if (isNaN(mins) || mins < 1) return alert("Enter valid minutes");
+        if (isNaN(mins) || mins < 1) return toast.error('Please enter a valid number', {
+            style: {
+                color: "#ffff",
+                backgroundColor: "black",
+                border: "1px solid white"
+            }
+        })
 
         try {
             setCallStatus('verifying');
@@ -120,7 +123,13 @@ export default function Dashboard() {
                 setShowDurationModal(false);
                 setShowInsufficientModal(true);
             } else {
-                alert("Server error. Ensure backend is running.");
+                toast.error('Server error. Ensure backend is running', {
+                    style: {
+                        color: "#ffff",
+                        backgroundColor: "black",
+                        border: "1px solid white"
+                    }
+                });
             }
         }
     };
@@ -132,7 +141,6 @@ export default function Dashboard() {
         fetchUserData();
     };
 
-    // 4. Data Loading
     useEffect(() => {
         const load = async () => {
             try {
@@ -141,8 +149,13 @@ export default function Dashboard() {
                 const data = Array.isArray(response) ? response : (response.data || []);
                 setAstrologers(data);
                 setFilteredAstrologers(data);
-            } catch (err) { setError("Failed to load data."); setAstrologers([]); }
-            finally { setLoading(false); }
+            } catch (err) {
+                setError("Failed to load data.");
+                setAstrologers([]);
+            }
+            finally {
+                setLoading(false);
+            }
         };
         load();
     }, []);
@@ -191,7 +204,7 @@ export default function Dashboard() {
 
             {/* Duration Picker Modal */}
             {showDurationModal && (
-                <div className="fixed inset-0 z-[95] bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 ">
                     <div className="bg-slate-900 border border-white/10 w-full max-w-md rounded-[2.5rem] shadow-2xl p-10 animate-in fade-in zoom-in duration-200">
                         <div className="flex justify-between items-center mb-8">
                             <h3 className="text-xl font-black tracking-tighter uppercase text-amber-500">Session Setup</h3>
@@ -266,17 +279,21 @@ export default function Dashboard() {
                             <div key={astro._id} className="group bg-slate-900/30 rounded-[2.5rem] border border-white/5 overflow-hidden hover:border-amber-500/40 transition-all duration-500 hover:translate-y-[-8px]">
                                 <div className="h-56 relative overflow-hidden bg-slate-800">
                                     <img src={astro.profileImage || "https://images.unsplash.com/photo-1515940175183-6798529cb860?q=80&w=1000&auto=format&fit=crop"} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-80 group-hover:opacity-100" alt={astro.name} />
-                                    
-                                    {/* Glassmorphic Badges */}
-                                    <div className="absolute top-4 right-4 bg-slate-950/60 backdrop-blur-md px-3 py-1.5 rounded-xl flex items-center gap-1.5 border border-white/10">
-                                        <Star size={12} className="text-amber-500 fill-amber-500" />
-                                        <span className="text-[10px] font-black text-white">{astro.rating || '5.0'}</span>
-                                    </div>
+
+                                    {astro.rating > 0 && (
+                                        <div className="absolute top-4 right-4 bg-slate-950/60 backdrop-blur-md px-3 py-1.5 rounded-xl flex items-center gap-1.5 border border-white/10">
+                                            <Star size={12} className="text-amber-500 fill-amber-500" />
+                                            <span className="text-[10px] font-black text-white">
+                                                {astro.rating.toFixed(1)}
+                                            </span>
+                                        </div>
+                                    )}
+
                                     <div className="absolute bottom-4 left-4">
                                         <span className="px-3 py-1.5 bg-amber-500 text-slate-950 text-[9px] font-black uppercase tracking-widest rounded-lg shadow-xl shadow-amber-500/20">{astro.specialization}</span>
                                     </div>
                                 </div>
-                                
+
                                 <div className="p-4 flex flex-col ">
                                     <div className="flex justify-between items-start mb-2">
                                         <h3 className="text-xl font-black text-white group-hover:text-amber-500 transition-colors tracking-tight line-clamp-1">{astro.name}</h3>

@@ -4,9 +4,8 @@ import KundliModel from '../models/kundli.model.js';
 export const generateKundli = async (req, res) => {
     try {
         const { day, month, year, hour, min, lat, lon, tzone, place } = req.body;
-        const userId = req.user._id || req.user.id; // Ensure this matches your authMiddleware
+        const userId = req.user._id || req.user.id; 
 
-        // 1. Force convert strings to numbers
         const latitude = parseFloat(lat);
         const longitude = parseFloat(lon);
         const timezone = parseFloat(tzone);
@@ -19,7 +18,6 @@ export const generateKundli = async (req, res) => {
         const formattedDob = `${pad(day)}/${pad(month)}/${year}`;
         const formattedTob = `${pad(hour)}:${pad(min)}`;
 
-        // 2. Call External API
         const response = await axios.get('https://api.vedicastroapi.com/v3-json/horoscope/planet-details', {
             params: {
                 dob: formattedDob,
@@ -33,7 +31,6 @@ export const generateKundli = async (req, res) => {
         });
 
         if (response.data.status === 200) {
-            // 3. CRITICAL: Save/Update to your Database
             const savedKundli = await KundliModel.findOneAndUpdate(
                 { userId },
                 {
@@ -48,7 +45,6 @@ export const generateKundli = async (req, res) => {
                 { upsert: true, new: true }
             );
 
-            // 4. SEND RESPONSE BACK (This stops the "Aligning Stars" spinner)
             return res.status(200).json({
                 success: true,
                 data: savedKundli.chartData
@@ -66,7 +62,6 @@ export const generateKundli = async (req, res) => {
     }
 };
 
-// 3. Fetch data from your DB (This prevents losing data on refresh)
 export const getSavedKundli = async (req, res) => {
     try {
         const kundli = await KundliModel.findOne({ userId: req.user.id });
@@ -78,7 +73,6 @@ export const getSavedKundli = async (req, res) => {
     }
 };
 
-// 4. Delete saved Kundli
 export const deleteKundli = async (req, res) => {
     try {
         await KundliModel.findOneAndDelete({ userId: req.user.id });
@@ -92,23 +86,18 @@ export const getDailyHoroscope = async (req, res) => {
     try {
         const userId = req.user._id || req.user.id;
 
-        // 1. Get the user's saved Rasi from the database
         const kundli = await KundliModel.findOne({ userId });
         if (!kundli) {
             return res.status(404).json({ success: false, message: "Please generate your Kundli first." });
         }
 
-        const rasi = kundli.chartData.rasi; // e.g., "Scorpio"
-
-        // Map Rasi names to IDs if your API requires numbers (Leo=5, etc.)
+        const rasi = kundli.chartData.rasi; 
         const rasiMap = {
             "Aries": 1, "Taurus": 2, "Gemini": 3, "Cancer": 4,
             "Leo": 5, "Virgo": 6, "Libra": 7, "Scorpio": 8,
             "Sagittarius": 9, "Capricorn": 10, "Aquarius": 11, "Pisces": 12
         };
 
-        // 2. Fetch Prediction from API
-        // For "Next Day", we calculate tomorrow's date
         const today = new Date();
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
@@ -144,9 +133,6 @@ export const getMatchingResult = async (req, res) => {
     try {
         const { p1, p2 } = req.body;
         const api_key = process.env.ASTRO_API_KEY;
-
-        // 1. Fetch Ashtakoot (Guna) Matching
-        // URL checked for V3 accuracy
         const gunaRes = await axios.get('https://api.vedicastroapi.com/v3-json/matching/ashtakoot', {
             params: {
                 boy_dob: p1.dob, boy_tob: p1.tob, boy_lat: p1.lat, boy_lon: p1.lon, boy_tz: p1.tz,
@@ -155,7 +141,6 @@ export const getMatchingResult = async (req, res) => {
             }
         });
 
-        // 2. Fetch Manglik Status (Wrapped in try/catch to prevent total crash)
         let manglikData = { p1: { is_manglik: false }, p2: { is_manglik: false } };
         try {
             const [boyManglik, girlManglik] = await Promise.all([

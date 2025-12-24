@@ -13,6 +13,7 @@ const POSITION = [30.7046, 76.7179]
 const MapSection = ({ small = false, style = {} }) => (
   <div style={style}>
     <MapContainer 
+    key={new Date().getTime()}
       center={POSITION} 
       zoom={small ? 13 : 14} 
       scrollWheelZoom={false} 

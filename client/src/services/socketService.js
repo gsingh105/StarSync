@@ -7,7 +7,6 @@ class SocketService {
 
     connect(userId) {
         if (!this.socket) {
-            // FIX: Added transports and withCredentials to stop the 400 error
             this.socket = io(SOCKET_URL, {
                 transports: ['websocket'], 
                 withCredentials: true,
@@ -15,7 +14,7 @@ class SocketService {
             });
             
             this.socket.on('connect', () => {
-                console.log('Socket Connected with ID:', this.socket.id);
+                // console.log('Socket Connected with ID:', this.socket.id);
                 // Registering the user/astrologer so the backend knows who is who
                 this.socket.emit('register', userId);
             });

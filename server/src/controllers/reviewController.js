@@ -5,13 +5,12 @@ import mongoose from "mongoose"
 export const submitReview = async (req, res) => {
   try {
     const { astrologerId, rating, comment } = req.body;
-    const userId = req.user.id; // From your authMiddleware
+    const userId = req.user.id; 
 
     if (!astrologerId || !rating) {
       return res.status(400).json({ success: false, message: "Rating and Astrologer ID are required" });
     }
 
-    // 1. Create the new review
     await Review.create({
       userId,
       astrologerId,
@@ -19,7 +18,6 @@ export const submitReview = async (req, res) => {
       comment,
     });
 
-    // 2. Aggregate average rating for this specific astrologer
     const stats = await Review.aggregate([
       { $match: { astrologerId: new mongoose.Types.ObjectId(astrologerId) } },
       {
@@ -31,10 +29,9 @@ export const submitReview = async (req, res) => {
       },
     ]);
 
-    // 3. Update the Astrologer model with the new average
     if (stats.length > 0) {
       await Astrologer.findByIdAndUpdate(astrologerId, {
-        rating: stats[0].avgRating.toFixed(1), // e.g., 4.5
+        rating: stats[0].avgRating.toFixed(1), 
       });
     }
 

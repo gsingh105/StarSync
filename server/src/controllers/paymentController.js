@@ -49,14 +49,12 @@ export const verifyPayment = async (req, res) => {
                 transaction.status = 'SUCCESS';
                 await transaction.save();
 
-                // 1. FIX: Add { new: true } to get the updated document
                 const updatedUser = await User.findByIdAndUpdate(
                     req.user.id, 
                     { $inc: { walletBalance: transaction.amount } },
                     { new: true } 
                 );
 
-                // 2. FIX: Return the new balance to the frontend
                 return res.json({ 
                     success: true, 
                     balance: updatedUser.walletBalance 

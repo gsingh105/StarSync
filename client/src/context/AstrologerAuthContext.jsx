@@ -12,21 +12,17 @@ export const AstrologerAuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // --- HELPER: Normalize Data ---
-  // Ensure we extract the inner object if the service returns a wrapper
+
   const handleAstrologerData = (data) => {
     if (!data) return null;
-    // If the service returns { success: true, astrologer: {...} } instead of just {...}
     if (data.astrologer) return data.astrologer;
     if (data.data) return data.data;
     return data;
   };
 
-  // 1. Check Session on Mount
   const checkAstrologerSession = async () => {
     try {
-      // Don't set loading true here if you want background refresh
-      // But for initial load, we keep it:
+
       if (!astrologer) setLoading(true);
 
       const data = await astrologerService.getCurrentAstrologer();
@@ -51,7 +47,7 @@ export const AstrologerAuthProvider = ({ children }) => {
     checkAstrologerSession();
   }, []);
 
-  // 2. Login Wrapper
+
   const login = async (email) => {
     setLoading(true);
     try {
